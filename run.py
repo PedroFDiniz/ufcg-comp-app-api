@@ -1,4 +1,5 @@
-from application import app, PORT, HOST
+from application import app
+from application.utils.constants import PORT, HOST
 from livereload import Server
 
 
