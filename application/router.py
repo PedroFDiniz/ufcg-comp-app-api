@@ -2,7 +2,6 @@ from application import app
 from flask import request, jsonify
 from application.controllers.user import User_Controller
 
-
 @app.route("/user/create", methods=["POST"])
 def create_user():
     data = request.get_json()
@@ -27,7 +26,6 @@ def create_user():
 
     return jsonify(res), status_code
 
-
 @app.route("/user/<enroll>/confirm_email/<email_confirmation_jwt>", methods=["GET"])
 def confirm_email(enroll, email_confirmation_jwt):
     try:
@@ -47,3 +45,26 @@ def confirm_email(enroll, email_confirmation_jwt):
     }
 
     return jsonify(res), status_code
+
+@app.route("/user/auth", methods=["POST"])
+def auth_user():
+    data = request.get_json()
+    enroll = data['enroll']
+    password = data['password']
+
+    try:
+        token = User_Controller.auth(enroll, password)
+        status_code = 200
+        message = "Usuário autenticado com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "token": token,
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+

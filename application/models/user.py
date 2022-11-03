@@ -5,6 +5,7 @@ from application import MONGO_DB
 from pymongo import ReturnDocument
 
 from application.utils.email import *
+from application.utils.jwt import *
 
 class User:
     @staticmethod
@@ -38,8 +39,9 @@ class User:
         return users_list
 
     @staticmethod
-    def find(enroll: str) -> Union[dict, None]:
-        user = MONGO_DB.user.find_one({'enroll': enroll})
+    def find_by_enroll(enroll: str, _project_password=False) -> Union[dict, None]:
+        projection = {"password" : int(_project_password)}
+        user = MONGO_DB.user.find_one({'enroll': enroll}, projection)
         return user
 
     @staticmethod
