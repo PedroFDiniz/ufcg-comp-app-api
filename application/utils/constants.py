@@ -25,3 +25,8 @@ Bem vindo ao YourComp!
 Para confirmar seu email, clique no link a seguir:
 %link%
 Se você não criou uma conta no YourComp, ignore este email."""
+
+# == ACTIVITY ==
+ACTIVITY_STATUS_CREATED = 'CREATED'
+ACTIVITY_STATUS_VALIDATED = 'VALIDATED'
+ACTIVITY_STATUS_FINISHED = 'FINISHED'
