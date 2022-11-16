@@ -33,34 +33,25 @@ class User:
         return user
 
     @staticmethod
-    def get_all():
-        results = MONGO_DB.user.find({})
-        users_list = list(results)
-        return users_list
+    def find(query: dict, _project_password=0):
+        projection = {"password" : _project_password, '_id': 0}
+        users = MONGO_DB.user.find(query, projection)
+        return users
 
     @staticmethod
-    def find_by_enroll(enroll: str, _project_password=False) -> Union[dict, None]:
-        projection = {"password" : int(_project_password)}
+    def find_by_enroll(enroll: str, _project_password=0) -> Union[dict, None]:
+        projection = {"password" : _project_password, '_id': 0}
         user = MONGO_DB.user.find_one({'enroll': enroll}, projection)
         return user
 
     @staticmethod
-    def update(enroll, update_fields):
+    def update(enroll: str, update_fields: str):
         query = { "enroll": enroll }
         update_doc = { "$set": update_fields }
         user = MONGO_DB.user.find_one_and_update(query,  update_doc, return_document=ReturnDocument.AFTER)
         return user
 
-        # @staticmethod
-        # def delete_user(username:str):
-        #     query = {"username": username}
-        #     projection = {"password" : 0}
-        #     user = DB.user.find_one(query, projection)
-        #     DB.user.delete_one({"username": username})
-        #     return user
-
-        # @staticmethod
-        # def update_user(username:str, update_fields:dict):
-        #     query = { "username": username }
-        #     update_doc = { "$set": update_fields }
-        #     return DB.user.find_one_and_update(query, update_doc, return_document=pymongo.ReturnDocument.AFTER)
+    @staticmethod
+    def remove(enroll: str):
+        query = { "enroll": enroll }
+        MONGO_DB.user.delete_one(query)

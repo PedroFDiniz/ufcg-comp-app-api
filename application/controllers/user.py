@@ -38,3 +38,31 @@ class User_Controller:
         token = auth.split().pop()
         return decode_auth_token(token)
 
+    def find(query: dict):
+        users = list(User.find(query))
+        myAssert(users, Exception(f"Users not found.", 404))
+        return users
+
+    def find_by_enroll(enroll: str):
+        user = User.find_by_enroll(enroll)
+        myAssert(user, Exception(f"User not found.", 404))
+        return user
+
+    def update(enroll: str, update_fields: str):
+        myAssert(enroll, Exception("Enroll can't be empty.", 400))        
+
+        user = User.find_by_enroll(enroll)
+        myAssert(user, Exception(f"User not found.", 404))
+
+        for field in update_fields:
+          myAssert(field, Exception(f"${field} can't be empty.", 400))        
+
+        User.update(enroll, update_fields)
+
+    def remove(enroll: str):
+        myAssert(enroll, Exception("Owner enroll can't be empty.", 400))        
+
+        user = User.find_by_enroll(enroll)
+        myAssert(user, Exception(f"Activity not found.", 404))
+
+        User.remove(enroll)

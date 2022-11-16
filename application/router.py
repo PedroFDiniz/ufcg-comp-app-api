@@ -21,6 +21,27 @@ def auth_required(f):
         return f(*args, **kwargs)
     return token_decoder
 
+@app.route("/user/auth", methods=["POST"])
+def auth_user():
+    data = request.get_json()
+    enroll = data['enroll']
+    password = data['password']
+
+    try:
+        token = User_Controller.auth(enroll, password)
+        status_code = 200
+        message = "Usuário autenticado com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "token": token,
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
 
 @app.route("/user/create", methods=["POST"])
 def create_user():
@@ -66,29 +87,99 @@ def confirm_email(enroll, email_confirmation_jwt):
 
     return jsonify(res), status_code
 
-@app.route("/user/auth", methods=["POST"])
-def auth_user():
-    data = request.get_json()
-    enroll = data['enroll']
-    password = data['password']
+
+# TODO add @admin_required
+@app.route("/user", methods=["GET"])
+@auth_required 
+def find_user():
+    data = request.form
+
+    query = dict()
+    for e_str in data:
+        e_raw = eval(data[e_str])
+        if len(e_raw) > 1:
+            query[e_str] = {'$all': e_raw}
+        else:
+            query[e_str] = e_raw[0]
 
     try:
-        token = User_Controller.auth(enroll, password)
+        users = User_Controller.find(query)
         status_code = 200
-        message = "Usuário autenticado com sucesso"
+        res = {
+            "users": users,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+    return jsonify(res), status_code
+
+@app.route("/user/<enroll>", methods=["GET"])
+@auth_required 
+def find_user_by_enroll(enroll):
+    try:
+        user = User_Controller.find_by_enroll(enroll)
+        status_code = 200
+        res = {
+            "user": user,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+    return jsonify(res), status_code
+
+@app.route("/user/<enroll>", methods=["PUT"])
+@auth_required
+def update_user(enroll):
+    data = request.form
+
+    query = dict()
+    for e_str in data:
+        query[e_str] = data[e_str]
+
+    try:
+        User_Controller.update(enroll, query)
+        status_code = 200
+        message = "Usuário atualizado com sucesso"
     except Exception as e:
         message = e.args[0]
         status_code = e.args[1]
 
     res = {
-        "token": token,
         "message": message,
         "status_code": status_code,
     }
 
     return jsonify(res), status_code
 
+@app.route("/user/<enroll>", methods=["DELETE"])
+@auth_required
+def remove_user(enroll):
+    try:
+        User_Controller.remove(enroll)
+        status_code = 200
+        message = "Uuário removido com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
 
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
 
 
 @app.route("/activity/register", methods=["POST"])
