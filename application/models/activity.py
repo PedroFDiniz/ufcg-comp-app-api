@@ -34,12 +34,14 @@ class Activity:
 
     @staticmethod
     def find(query: dict):
-        activity = MONGO_DB.activity.find(query, {'_id': 0})
+        projection =  {'_id': 0}
+        activity = MONGO_DB.activity.find(query, projection)
         return activity
 
     @staticmethod
     def find_one(query: dict):
-        activity = MONGO_DB.activity.find_one(query, {'_id': 0})
+        projection =  {'_id': 0}
+        activity = MONGO_DB.activity.find_one(query, projection)
         return activity
 
     @staticmethod
