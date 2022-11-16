@@ -1,4 +1,4 @@
-from application.models.activty import Activity
+from application.models.activity import Activity
 from application.utils.validation import *
 from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS_VALIDATED, ACTIVITY_STATUS_FINISHED
 
@@ -23,6 +23,26 @@ class Activity_Controller:
         return activity
 
     def find(query: dict):
-        activity = Activity.find(query)
+        activity = list(Activity.find(query))
         return activity
 
+    def update(owner_enroll: str, description: str, update_fields: str):
+        myAssert(owner_enroll, Exception("Owner enroll can't be empty.", 400))        
+        myAssert(description, Exception("Owner enroll can't be empty.", 400))        
+
+        activity = Activity.find_one({ "owner_enroll": owner_enroll, "description": description})
+        myAssert(activity, Exception(f"Activity not found.", 404))
+
+        for field in update_fields:
+          myAssert(field, Exception(f"${field} can't be empty.", 400))        
+
+        Activity.update(owner_enroll, description, update_fields)
+
+    def remove(owner_enroll: str, description: str):
+        myAssert(owner_enroll, Exception("Owner enroll can't be empty.", 400))        
+        myAssert(description, Exception("Owner enroll can't be empty.", 400))       
+
+        activity = Activity.find_one({ "owner_enroll": owner_enroll, "description": description})
+        myAssert(activity, Exception(f"Activity not found.", 404))
+
+        Activity.remove(owner_enroll, description)

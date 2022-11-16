@@ -1,7 +1,8 @@
-import jwt, os, base64
+import base64
+from json import dumps
 from application import app
 from functools import wraps
-from flask import request, jsonify, abort, make_response
+from flask import Response, request, jsonify, abort
 from application.utils.validation import *
 from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
@@ -9,24 +10,17 @@ from application.controllers.activity import Activity_Controller
 def auth_required(f):
     @wraps(f)
     def token_decoder(*args, **kwargs):
-        auth = request.headers.get('Authorization')
         try:
+            auth = request.headers.get('Authorization')
             User_Controller.check_auth(auth)
-        except jwt.ExpiredSignatureError:
-            status_code = 498 
-            message = "Signature expired. Please log in again.",
-            return jsonify({message, status_code}), status_code            
-        except jwt.InvalidTokenError:
-            status_code = 498 
-            message = "Invalid token. Please log in again.",
-            return jsonify({message, status_code}), status_code
         except Exception as e:
-            message = e.args[0]
-            status_code = e.args[1]
-            return jsonify({message, status_code}), status_code
+            status_code = 498            
+            message = dumps({'message': "Invalid token."})
+            abort(Response(message, status_code))
 
         return f(*args, **kwargs)
     return token_decoder
+
 
 @app.route("/user/create", methods=["POST"])
 def create_user():
@@ -94,6 +88,9 @@ def auth_user():
 
     return jsonify(res), status_code
 
+
+
+
 @app.route("/activity/register", methods=["POST"])
 @auth_required
 def register_activity():
@@ -118,9 +115,10 @@ def register_activity():
     #   proof_doc.save(filepath)
 
     try:
-      Activity_Controller.register(owner_enroll, b64_doc, credits, period, type, description)
-      status_code = 200
-      message = "Atividade registrada com sucesso"
+        Activity_Controller.register(
+            owner_enroll, b64_doc, credits, period, type, description)
+        status_code = 200
+        message = "Atividade registrada com sucesso"
     except Exception as e:
         message = e.args[0]
         status_code = e.args[1]
@@ -132,33 +130,75 @@ def register_activity():
 
     return jsonify(res), status_code
 
-# # TODO add @admin_required
-# @app.route("/activities", methods=["GET"])
-# @auth_required
-# def find_activity():
-#     data = request.form
+# TODO add @admin_required
+@app.route("/activities", methods=["GET"])
+@auth_required 
+def find_activity():
+    data = request.form
 
-#     query = dict()
-#     for e in data:
-#         query[e] = eval(data[e])
+    query = dict()
+    for e_str in data:
+        e_raw = eval(data[e_str])
+        if len(e_raw) > 1:
+            query[e_str] = {'$all': e_raw}
+        else:
+            query[e_str] = e_raw[0]
 
-#     try:
-#         activity = Activity_Controller.find(query)
-#         status_code = 200
+    try:
+        activity = Activity_Controller.find(query)
+        status_code = 200
+        res = {
+            "activities": activity,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
 
-#         print(activity)
+    return jsonify(res), status_code
 
-#         res = {
-#             "activity": activity,
-#             "status_code": status_code,
-#         }
+@app.route("/activity/update/<owner_enroll>/<description>", methods=["PUT"])
+@auth_required
+def update_activity(owner_enroll, description):
+    data = request.form
 
-#     except Exception as e:
-#         message = e.args[0]
-#         status_code = e.args[1]
-#         res = {
-#             "message": message,
-#             "status_code": status_code,
-#         }
+    query = dict()
+    for e_str in data:
+        query[e_str] = data[e_str]
 
-#     return jsonify(res), status_code
+    try:
+        Activity_Controller.update(owner_enroll, description, query)
+        status_code = 200
+        message = "Atividade atualizada com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
+@app.route("/activity/remove/<owner_enroll>/<description>", methods=["DELETE"])
+@auth_required
+def remove_activity(owner_enroll, description):
+    try:
+        Activity_Controller.remove(owner_enroll, description)
+        status_code = 200
+        message = "Atividade removida com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code

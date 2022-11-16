@@ -29,5 +29,8 @@ def encode_auth_token(user_id:str) -> str:
     )
 
 def decode_auth_token(auth_token):
-    payload = jwt.decode(auth_token, JWT_SECRET, algorithms="HS256")
-    return payload["sub"]
+    payload = jwt.decode(auth_token, JWT_SECRET, algorithms=["HS256"])
+    expire_datetime = datetime.datetime.fromtimestamp(payload['exp'])
+    current_datetime = datetime.datetime.now()
+
+    return expire_datetime > current_datetime

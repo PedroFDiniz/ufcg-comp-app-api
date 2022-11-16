@@ -32,8 +32,8 @@ class User_Controller:
         return encode_auth_token(user.get('enroll'))
         
     def check_auth(auth: str):
-        myAssert(auth, jwt.ExpiredSignatureError("Authorization header not present", 400))
-        myAssert(len(auth.split(" ")) == 2 and "Bearer" in auth, jwt.InvalidTokenError("Token invalid format", 498))
+        myAssert(auth, jwt.InvalidTokenError)
+        myAssert(len(auth.split(" ")) == 2 and "Bearer" in auth, jwt.InvalidTokenError)
 
         token = auth.split().pop()
         return decode_auth_token(token)
