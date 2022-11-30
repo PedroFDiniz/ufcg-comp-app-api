@@ -1,10 +1,10 @@
 from application import MONGO_DB
-import pymongo
+import pymongo, datetime
 
 class Activity:
 
     @staticmethod
-    def register(owner_enroll: str, proof_doc: str, credits: str, period: str, type: str, description: str, status: str):
+    def register(owner_email:str, owner_enroll: str, proof_doc: str, credits: str, period: str, type: str, description: str, status: str):
         """
         This function add a activity in the database
         -------------------------------------------
@@ -19,6 +19,7 @@ class Activity:
 
         try:
             activity = {
+                'owner_email': owner_email,
                 'owner_enroll': owner_enroll,
                 'proof_doc': proof_doc,
                 'credits': credits,
@@ -26,6 +27,9 @@ class Activity:
                 'type': type,
                 'description': description,
                 'status': status,
+                'reviewer': None,
+                'createdTime': datetime.datetime.utcnow(),
+                'updatedTime': datetime.datetime.utcnow(),
             }
             
             MONGO_DB.activity.insert_one(activity)
@@ -34,7 +38,7 @@ class Activity:
 
     @staticmethod
     def find(query: dict):
-        projection =  {'_id': 0}
+        projection =  {'_id': 0, 'proof_doc': 0}
         activity = MONGO_DB.activity.find(query, projection)
         return activity
 
@@ -46,7 +50,7 @@ class Activity:
 
     @staticmethod
     def update(owner_enroll: str, description: str, update_fields:str):
-        query = { "owner_enroll": owner_enroll, "description": description }
+        query = { "owner_enroll": owner_enroll, "description": description, 'updatedTime': datetime.datetime.utcnow() }
         update_doc = { "$set": update_fields }
         activity = MONGO_DB.activity.find_one_and_update(query, update_doc, return_document=pymongo.ReturnDocument.AFTER)
         return activity
