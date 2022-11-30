@@ -1,10 +1,7 @@
 import base64
-from json import dumps
 from application import app
-from functools import wraps
-from flask import Response, request, jsonify, abort
+from flask import request, jsonify
 from application.utils.validation import *
-from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
 
 @app.route("/activity/register", methods=["POST"])
@@ -51,6 +48,11 @@ def register_activity():
 def find_activity():
     data = request.get_json()
 
+    page = int(request.args.get('page'))
+    size = int(request.args.get('size'))
+    sort = str(request.args.get('sort'))
+    order = str(request.args.get('order'))
+
     query = dict()
     for e_str in data:
         e_raw = data[e_str]
@@ -60,7 +62,7 @@ def find_activity():
             query[e_str] = e_raw[0]
 
     try:
-        activity = Activity_Controller.find(query)
+        activity = Activity_Controller.find(query, page, size, sort, order)
         status_code = 200
         res = {
             "activities": activity,

@@ -17,8 +17,8 @@ class Activity_Controller:
 
         return activity
 
-    def find(query: dict):
-        activity = list(Activity.find(query))
+    def find(query: dict, page: str, size: str, sort: str, order:str):
+        activity = list(Activity.find(query, page, size, sort, order))
         return activity
 
     def update(owner_enroll: str, description: str, update_fields: str):

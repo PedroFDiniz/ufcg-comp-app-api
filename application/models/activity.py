@@ -14,7 +14,7 @@ class Activity:
         period: Period that the student participates 
         activity_type: Activity type
         activity_description: Activity description
-        status: activity status (Created, Validated, Rejected)
+        status: activity status (Created, Assigned, Validated, Rejected)
         """
 
         try:
@@ -37,9 +37,10 @@ class Activity:
             raise(e)
 
     @staticmethod
-    def find(query: dict):
+    def find(query: dict, page: int, size: int, sort:str, order:str):
         projection =  {'_id': 0, 'proof_doc': 0}
-        activity = MONGO_DB.activity.find(query, projection)
+        direction = pymongo.ASCENDING if order == 'asc' else pymongo.DESCENDING
+        activity = MONGO_DB.activity.find(query, projection).sort(sort, direction).limit(size).skip(page * page)
         return activity
 
     @staticmethod
