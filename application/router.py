@@ -13,7 +13,6 @@ def register_activity():
     data = request.form
     owner_email = data['owner_email']
     owner_enroll = data['owner_enroll']
-    credits = data['credits']
     period = data['period']
     type = data['type']
     description = data['description']
@@ -28,8 +27,7 @@ def register_activity():
     #   proof_doc.save(filepath)
 
     try:
-        Activity_Controller.register(
-            owner_email, owner_enroll, b64_doc, credits, period, type, description)
+        Activity_Controller.register(owner_email, owner_enroll, b64_doc, period, type, description)
         status_code = 200
         message = "Atividade registrada com sucesso"
     except Exception as e:
@@ -70,7 +68,7 @@ def find_activity():
         }
     except Exception as e:
         message = e.args[0]
-        status_code = e.args[1]
+        status_code = 400
         res = {
             "message": message,
             "status_code": status_code,
@@ -78,16 +76,12 @@ def find_activity():
 
     return jsonify(res), status_code
 
-@app.route("/activity/update/<owner_enroll>/<description>", methods=["PUT"])
-def update_activity(owner_enroll, description):
-    data = request.form
-
-    query = dict()
-    for e_str in data:
-        query[e_str] = data[e_str]
+@app.route("/activity/update/<activity_id>", methods=["PUT"])
+def update_activity(activity_id):
+    data = request.get_json()
 
     try:
-        Activity_Controller.update(owner_enroll, description, query)
+        Activity_Controller.update(activity_id, data)
         status_code = 200
         message = "Atividade atualizada com sucesso"
     except Exception as e:
@@ -98,6 +92,25 @@ def update_activity(owner_enroll, description):
         "message": message,
         "status_code": status_code,
     }
+
+    return jsonify(res), status_code
+
+@app.route("/activities/count", methods=["GET"])
+def count_activities():
+    try:
+        activities_count = Activity_Controller.count()
+        status_code = 200
+        res = {
+            "activities_count": activities_count,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = 400
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
 
     return jsonify(res), status_code
 
