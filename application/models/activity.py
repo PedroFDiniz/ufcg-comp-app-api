@@ -81,11 +81,7 @@ class Activity:
         update_doc = {"$set": update_fields}
         activity = MONGO_DB.activity.find_one_and_update(query, update_doc, return_document=pymongo.ReturnDocument.AFTER)
         return activity
-
-    @staticmethod
-    def remove(activity_id: str):
-        MONGO_DB.activity.delete_one({'_id': ObjectId(activity_id)})
-
+        
     @staticmethod
     def count():
         return MONGO_DB.activity.count_documents({})

@@ -39,15 +39,6 @@ class Activity_Controller:
         update_fields = {'reviewer': reviewer, 'status': ACTIVITY_STATUS_ASSIGNED}
         Activity.update(activity_id, update_fields)
 
-    def remove(activity_id: str, description: str):
-        myAssert(activity_id, Exception("Activity id can't be empty.", 400))        
-
-        activity = Activity.find_one_by_id(activity_id)
-        myAssert(activity, Exception(f"Activity not found.", 404))
-        myAssert(activity, Exception(f"Activity not found.", 404))
-
-        Activity.remove(activity_id)
-
     def count():
         count = Activity.count()
         return count
