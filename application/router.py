@@ -1,6 +1,6 @@
-import base64, threading
+import threading, os
 from application import app
-from flask import request, jsonify
+from flask import request, jsonify, send_file
 from application.utils.email import *
 from application.utils.validation import *
 from application.controllers.activity import Activity_Controller
@@ -8,8 +8,7 @@ from application.controllers.activity import Activity_Controller
 @app.route("/activity/register", methods=["POST"])
 def register_activity():
     files = request.files
-    proof_doc = files['proof_doc']
-    b64_doc = base64.b64encode(proof_doc.read()).decode('UTF-8')
+    preflight_doc = files['preflight_doc']
 
     data = request.form
     owner_email = data['owner_email']
@@ -18,17 +17,18 @@ def register_activity():
     type = data['type']
     description = data['description']
 
-    # userdir = f'./documents/{owner_enroll}'
-    # filepath = f'{userdir}/{proof_doc.filename}'
+    doc_dir = f'./documents'
+    doc_path = f'{owner_enroll}/{preflight_doc.filename}'
+    main_path = f'{doc_dir}/{doc_path}'
 
-    # if not os.path.exists(userdir):
-    #     os.makedirs(userdir)
+    if not os.path.exists(f'{doc_dir}/{owner_enroll}'):
+        os.makedirs(f'{doc_dir}/{owner_enroll}')
 
-    # if not os.path.exists(filepath):
-    #   proof_doc.save(filepath)
+    if not os.path.exists(main_path):
+      preflight_doc.save(main_path)
 
     try:
-        Activity_Controller.register(owner_email, owner_enroll, b64_doc, period, type, description)
+        Activity_Controller.register(owner_email, owner_enroll, doc_path, period, type, description)
         status_code = 200
         message = "Atividade registrada com sucesso"
     except Exception as e:
@@ -42,7 +42,6 @@ def register_activity():
 
     return jsonify(res), status_code
 
-# TODO add @admin_required
 @app.route("/activities", methods=["POST"])
 def find_activity():
     data = request.get_json()
@@ -115,19 +114,23 @@ def count_activities():
 
     return jsonify(res), status_code
 
+@app.route("/activity/doc/download", methods=["GET"])
+def download_document():
+    path = request.args.get('path')
+    return send_file(f'../documents/{path}', as_attachment=True)
+
 @app.route("/activity/assign", methods=["PUT"])
 def assign_activity():
     data = request.get_json()
 
     reviewer = data['reviewer']
     activity_id = data['activity_id']
-    query = {'reviewer': reviewer}
 
     try:
         thread = threading.Thread(target=send_noreply_email(reviewer))
         thread.start()
         
-        Activity_Controller.update(activity_id, query)
+        Activity_Controller.assign(activity_id, reviewer)
         status_code = 200
         message = "Atividade atualizada com sucesso"
     except Exception as e:

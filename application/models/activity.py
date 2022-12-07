@@ -15,6 +15,7 @@ DEFAULT_PROJECTION_FIELDS = {
     'reviewer': 1,
     'createdTime': 1,
     'updatedTime': 1,
+    'proof_doc': 1
 }
 
 
