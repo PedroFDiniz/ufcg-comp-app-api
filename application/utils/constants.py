@@ -14,17 +14,14 @@ JWT_TIMEOUT = 86400 # 1 dia
 JWT_EMAIL_TIMEOUT = 86300
 
 # == EMAIL ==
-EMAIL = os.getenv("EMAIL", "")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+NOREPLY_EMAIL = os.getenv("NOREPLY_EMAIL", "")
+NOREPLY_EMAIL_PASSWD = os.getenv("NOREPLY_EMAIL_PASSWD", "")
+
 
 SMTP_PORT = 587
 SMTP_SERVER = "smtp.gmail.com"
-SUBJECT = "YourComp: confirme seu cadastro"
-MESSAGE = """\
-Bem vindo ao YourComp!
-Para confirmar seu email, clique no link a seguir:
-%link%
-Se você não criou uma conta no YourComp, ignore este email."""
+SUBJECT = "[Computação@UFCG] Atividade complementar atribuida"
+MESSAGE = """\ Uma nova atividade complementar esta disponivel para revisão."""
 
 # == ACTIVITY ==
 ACTIVITY_STATUS_CREATED = 'CREATED'

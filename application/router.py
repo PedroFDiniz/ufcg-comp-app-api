@@ -1,6 +1,7 @@
-import base64
+import base64, threading
 from application import app
 from flask import request, jsonify
+from application.utils.email import *
 from application.utils.validation import *
 from application.controllers.activity import Activity_Controller
 
@@ -111,6 +112,32 @@ def count_activities():
             "message": message,
             "status_code": status_code,
         }
+
+    return jsonify(res), status_code
+
+@app.route("/activity/assign", methods=["PUT"])
+def assign_activity():
+    data = request.get_json()
+
+    reviewer = data['reviewer']
+    activity_id = data['activity_id']
+    query = {'reviewer': reviewer}
+
+    try:
+        thread = threading.Thread(target=send_noreply_email(reviewer))
+        thread.start()
+        
+        Activity_Controller.update(activity_id, query)
+        status_code = 200
+        message = "Atividade atualizada com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
 
     return jsonify(res), status_code
 
