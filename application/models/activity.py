@@ -81,7 +81,7 @@ class Activity:
         update_doc = {"$set": update_fields}
         activity = MONGO_DB.activity.find_one_and_update(query, update_doc, return_document=pymongo.ReturnDocument.AFTER)
         return activity
-        
+
     @staticmethod
-    def count():
-        return MONGO_DB.activity.count_documents({})
+    def count(query: dict):
+        return MONGO_DB.activity.count_documents(query)

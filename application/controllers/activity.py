@@ -39,7 +39,7 @@ class Activity_Controller:
         update_fields = {'reviewer': reviewer, 'status': ACTIVITY_STATUS_ASSIGNED}
         Activity.update(activity_id, update_fields)
 
-    def count():
-        count = Activity.count()
+    def count(query: dict):
+        count = Activity.count(query)
         return count
 

@@ -42,8 +42,57 @@ def register_activity():
 
     return jsonify(res), status_code
 
+@app.route("/activity/update/<activity_id>", methods=["PUT"])
+def update_activity(activity_id):
+    data = request.get_json()
+
+    try:
+        Activity_Controller.update(activity_id, data)
+        status_code = 200
+        message = "Atividade atualizada com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
+@app.route("/activity/assign", methods=["PUT"])
+def assign_activity():
+    data = request.get_json()
+
+    reviewer = data['reviewer']
+    activity_id = data['activity_id']
+
+    try:
+        thread = threading.Thread(target=send_noreply_email(reviewer))
+        thread.start()
+        
+        Activity_Controller.assign(activity_id, reviewer)
+        status_code = 200
+        message = "Atividade atualizada com sucesso"
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
+@app.route("/activity/doc/download", methods=["GET"])
+def download_activity_doc():
+    path = request.args.get('path')
+    return send_file(f'../documents/{path}', as_attachment=True)
+
 @app.route("/activities", methods=["POST"])
-def find_activity():
+def find_activities():
     data = request.get_json()
 
     page = int(request.args.get('page'))
@@ -76,29 +125,20 @@ def find_activity():
 
     return jsonify(res), status_code
 
-@app.route("/activity/update/<activity_id>", methods=["PUT"])
-def update_activity(activity_id):
+@app.route("/activities/count", methods=["POST"])
+def count_activities():
     data = request.get_json()
 
+    query = dict()
+    for e_str in data:
+        e_raw = data[e_str]
+        if type(e_raw) is list:
+            query[e_str] = {'$in': e_raw}
+        else:
+            query[e_str] = e_raw
+
     try:
-        Activity_Controller.update(activity_id, data)
-        status_code = 200
-        message = "Atividade atualizada com sucesso"
-    except Exception as e:
-        message = e.args[0]
-        status_code = e.args[1]
-
-    res = {
-        "message": message,
-        "status_code": status_code,
-    }
-
-    return jsonify(res), status_code
-
-@app.route("/activities/count", methods=["GET"])
-def count_activities():
-    try:
-        activities_count = Activity_Controller.count()
+        activities_count = Activity_Controller.count(query)
         status_code = 200
         res = {
             "activities_count": activities_count,
@@ -111,36 +151,6 @@ def count_activities():
             "message": message,
             "status_code": status_code,
         }
-
-    return jsonify(res), status_code
-
-@app.route("/activity/doc/download", methods=["GET"])
-def download_document():
-    path = request.args.get('path')
-    return send_file(f'../documents/{path}', as_attachment=True)
-
-@app.route("/activity/assign", methods=["PUT"])
-def assign_activity():
-    data = request.get_json()
-
-    reviewer = data['reviewer']
-    activity_id = data['activity_id']
-
-    try:
-        thread = threading.Thread(target=send_noreply_email(reviewer))
-        thread.start()
-        
-        Activity_Controller.assign(activity_id, reviewer)
-        status_code = 200
-        message = "Atividade atualizada com sucesso"
-    except Exception as e:
-        message = e.args[0]
-        status_code = e.args[1]
-
-    res = {
-        "message": message,
-        "status_code": status_code,
-    }
 
     return jsonify(res), status_code
 
