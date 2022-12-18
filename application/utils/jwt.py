@@ -1,5 +1,4 @@
 import jwt, datetime
-from dotenv import load_dotenv
 from application.utils.constants import JWT_SECRET, JWT_TIMEOUT, JWT_EMAIL_TIMEOUT
 
 def create_email_confirmation_jwt(email):
