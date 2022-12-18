@@ -15,6 +15,7 @@ DEFAULT_PROJECTION_FIELDS = {
     'reviewer': 1,
     'createdTime': 1,
     'updatedTime': 1,
+    'proof_doc': 1
 }
 
 
@@ -82,9 +83,5 @@ class Activity:
         return activity
 
     @staticmethod
-    def remove(activity_id: str):
-        MONGO_DB.activity.delete_one({'_id': ObjectId(activity_id)})
-
-    @staticmethod
-    def count():
-        return MONGO_DB.activity.count_documents({})
+    def count(query: dict):
+        return MONGO_DB.activity.count_documents(query)
