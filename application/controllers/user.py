@@ -1,6 +1,5 @@
 from application.models.user import User
 from application.utils.validation import *
-from application.utils.jwt import *
 
 class User_Controller:
   

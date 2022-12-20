@@ -1,7 +1,5 @@
 from application import app
 from application.utils.constants import PORT, HOST
-from livereload import Server
-
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT, debug=True)
