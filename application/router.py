@@ -94,18 +94,18 @@ def register_activity():
     type = data['type']
     description = data['description']
 
-    doc_dir = f'./documents'
-    doc_path = f'{owner_enroll}/{preflight_doc.filename}'
-    main_path = f'{doc_dir}/{doc_path}'
+    doc_general_dir = f'./documents'
+    doc_user_dir = owner_email.split("@")[0]
+    doc_final_path = f'{doc_user_dir}/{preflight_doc.filename}'
 
-    if not os.path.exists(f'{doc_dir}/{owner_enroll}'):
-        os.makedirs(f'{doc_dir}/{owner_enroll}')
+    if not os.path.exists(f'{doc_general_dir}/{doc_user_dir}'):
+        os.makedirs(f'{doc_general_dir}/{doc_user_dir}')
 
-    if not os.path.exists(main_path):
-      preflight_doc.save(main_path)
+    if not os.path.exists(f'{doc_general_dir}/{doc_final_path}'):
+      preflight_doc.save(f'{doc_general_dir}/{doc_final_path}')
 
     try:
-        Activity_Controller.register(owner_email, owner_enroll, doc_path, period, type, description)
+        Activity_Controller.register(owner_email, owner_enroll, doc_final_path, period, type, description)
         status_code = 200
         message = "Atividade registrada com sucesso"
     except Exception as e:
@@ -232,7 +232,7 @@ def count_activities():
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', "http://localhost:3000")
+    response.headers.add('Access-Control-Allow-Origin', "*")
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH')
     return response
