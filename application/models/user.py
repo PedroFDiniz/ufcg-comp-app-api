@@ -3,7 +3,6 @@ import datetime
 
 DEFAULT_PROJECTION_FIELDS = {
     '_id': {"$toString": "$_id"},
-    'enroll': 1,
     'name': 1, 
     'email': 1,
     'role': 1,
@@ -14,9 +13,8 @@ DEFAULT_PROJECTION_FIELDS = {
 
 class User:
     @staticmethod
-    def create(enroll: str, name: str, email: str, role: str):
+    def create(name: str, email: str, role: str):
         user = {
-            'enroll': enroll,
             'name': name, 
             'email': email,
             'role': role,
@@ -25,7 +23,6 @@ class User:
         }
 
         MONGO_DB.user.insert_one(user)
-
         return user
 
     @staticmethod
@@ -33,9 +30,10 @@ class User:
         projection = DEFAULT_PROJECTION_FIELDS
         users = MONGO_DB.user.find(query, projection)
         return users
-
+    
     @staticmethod
-    def find_by_enroll(enroll: str):
+    def find_one(query: dict):
         projection = DEFAULT_PROJECTION_FIELDS
-        user = MONGO_DB.user.find_one({'enroll': enroll}, projection)
+        user = MONGO_DB.user.find_one(query, projection)
         return user
+

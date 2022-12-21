@@ -13,13 +13,12 @@ from application.controllers.activity import Activity_Controller
 @app.route("/user/register", methods=["POST"])
 def register_user():
     data = request.get_json()
-    enroll = data['enroll']
     name = data['name']
     email = data['email']
     role = data['role']
 
     try:
-        User_Controller.create(enroll, name, email, role)
+        User_Controller.create(name, email, role)
         status_code = 200
         message = "User created sussefull"
     except Exception as e:
@@ -33,8 +32,28 @@ def register_user():
 
     return jsonify(res), status_code
 
-@app.route("/user", methods=["GET"])
-def find_user():
+@app.route("/user/<email>", methods=["GET"])
+def find_user_by_email(email):
+    try:
+        user = User_Controller.find_by_email(email)
+        status_code = 200
+        res = {
+            "user": user,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+    return jsonify(res), status_code
+
+
+@app.route("/users", methods=["POST"])
+def find_users():
     data = request.get_json()
 
     query = dict()
@@ -61,26 +80,6 @@ def find_user():
         }
 
     return jsonify(res), status_code
-
-@app.route("/user/<enroll>", methods=["GET"])
-def find_user_by_enroll(enroll):
-    try:
-        user = User_Controller.find_by_enroll(enroll)
-        status_code = 200
-        res = {
-            "user": user,
-            "status_code": status_code,
-        }
-    except Exception as e:
-        message = e.args[0]
-        status_code = e.args[1]
-        res = {
-            "message": message,
-            "status_code": status_code,
-        }
-
-    return jsonify(res), status_code
-
 
 # ====== Activity
 @app.route("/activity/register", methods=["POST"])
