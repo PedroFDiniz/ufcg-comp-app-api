@@ -85,27 +85,26 @@ def find_users():
 @app.route("/activity/register", methods=["POST"])
 def register_activity():
     files = request.files
-    preflight_doc = files['preflight_doc']
+    voucher = files['voucher']
 
     data = request.form
     owner_email = data['owner_email']
-    owner_enroll = data['owner_enroll']
     period = data['period']
     type = data['type']
     description = data['description']
 
     doc_general_dir = f'./documents'
     doc_user_dir = owner_email.split("@")[0]
-    doc_final_path = f'{doc_user_dir}/{preflight_doc.filename}'
+    doc_final_path = f'{doc_user_dir}/{voucher.filename}'
 
     if not os.path.exists(f'{doc_general_dir}/{doc_user_dir}'):
         os.makedirs(f'{doc_general_dir}/{doc_user_dir}')
 
     if not os.path.exists(f'{doc_general_dir}/{doc_final_path}'):
-      preflight_doc.save(f'{doc_general_dir}/{doc_final_path}')
+      voucher.save(f'{doc_general_dir}/{doc_final_path}')
 
     try:
-        Activity_Controller.register(owner_email, owner_enroll, doc_final_path, period, type, description)
+        Activity_Controller.register(owner_email, doc_final_path, period, type, description)
         status_code = 200
         message = "Atividade registrada com sucesso"
     except Exception as e:

@@ -4,16 +4,15 @@ from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS
 from bson.objectid import ObjectId
 
 class Activity_Controller:
-    def register(owner_email: str, owner_enroll: str, doc_path: str, period:str, type:str, description:str):
+    def register(owner_email: str, doc_path: str, period:str, type:str, description:str):
 
         myAssert(owner_email, Exception("Owner email can't be empty.", 400))
-        myAssert(owner_enroll, Exception("Owner enroll can't be empty.", 400))
         myAssert(doc_path, Exception("Document can't be empty.", 400))
         myAssert(period, Exception("Period can't be empty.", 400))
         myAssert(type, Exception("Type can't be empty.", 400))
         myAssert(description, Exception("Description can't be empty.", 400))
 
-        activity = Activity.register(owner_email, owner_enroll, doc_path, period, type, description, ACTIVITY_STATUS_CREATED)
+        activity = Activity.register(owner_email, doc_path, period, type, description, ACTIVITY_STATUS_CREATED)
 
         return activity
 

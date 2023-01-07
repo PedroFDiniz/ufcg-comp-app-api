@@ -6,7 +6,6 @@ import datetime
 DEFAULT_PROJECTION_FIELDS = {
     '_id': {"$toString": "$_id"},
     'owner_email': 1,
-    'owner_enroll': 1,
     'credits': 1,
     'period': 1,
     'type': 1,
@@ -15,19 +14,19 @@ DEFAULT_PROJECTION_FIELDS = {
     'reviewer': 1,
     'createdTime': 1,
     'updatedTime': 1,
-    'proof_doc': 1
+    'voucher': 1
 }
 
 
 class Activity:
 
     @staticmethod
-    def register(owner_email: str, owner_enroll: str, proof_doc: str, period: str, type: str, description: str, status: str):
+    def register(owner_email: str, voucher: str, period: str, type: str, description: str, status: str):
         """
         This function add a activity in the database
         -------------------------------------------
         owner_enroll: Id of the activity owner
-        proof_doc: Is the document to comproove the time spend
+        voucher: Is the document to comproove the time spend
         credits: Amount of hours that will be computed
         period: Period that the student participates
         activity_type: Activity type
@@ -37,10 +36,9 @@ class Activity:
 
         try:
             activity = {
-                'owner_enroll': owner_enroll,
                 'owner_email': owner_email,
                 'description': description,
-                'proof_doc': proof_doc,
+                'voucher': voucher,
                 'period': period,
                 'status': status,
                 'type': type,
@@ -59,8 +57,7 @@ class Activity:
     def find(query: dict, page: int, size: int, sort: str, order: str):
         projection = DEFAULT_PROJECTION_FIELDS
         direction = pymongo.ASCENDING if order == 'asc' else pymongo.DESCENDING
-        activity = MONGO_DB.activity.find(query, projection).sort(
-            sort, direction).limit(size).skip(page * size)
+        activity = MONGO_DB.activity.find(query, projection).sort(sort, direction).limit(size).skip(page * size)
         return activity
 
     @staticmethod
