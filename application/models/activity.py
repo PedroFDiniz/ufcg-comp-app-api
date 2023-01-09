@@ -56,8 +56,14 @@ class Activity:
     @staticmethod
     def find(query: dict, page: int, size: int, sort: str, order: str):
         projection = DEFAULT_PROJECTION_FIELDS
-        direction = pymongo.ASCENDING if order == 'asc' else pymongo.DESCENDING
-        activity = MONGO_DB.activity.find(query, projection).sort(sort, direction).limit(size).skip(page * size)
+        activity = MONGO_DB.activity.find(query, projection)
+
+        if (sort):
+            direction = pymongo.ASCENDING if order == 'asc' else pymongo.DESCENDING
+            activity = activity.sort(sort, direction)
+        if (page):
+            activity = activity.limit(size).skip(page * size)
+
         return activity
 
     @staticmethod

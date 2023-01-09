@@ -229,6 +229,26 @@ def count_activities():
 
     return jsonify(res), status_code
 
+
+@app.route("/activities/computeCredits/<owner_email>", methods=["GET"])
+def compute_activities_credits(owner_email):
+    try:
+        credits_info = Activity_Controller.compute_credits(owner_email)
+        status_code = 200
+        res = {
+            "credits_info": credits_info,
+            "status_code": status_code,
+        }
+    except Exception as e:
+        message = e.args[0]
+        status_code = 400
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+    return jsonify(res), status_code
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', "*")
