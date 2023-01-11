@@ -95,7 +95,7 @@ def register_activity():
     data = request.form
     owner_email = data['owner_email']
     period = data['period']
-    kind = data['type']
+    kind = data['kind']
     description = data['description']
 
     try:
@@ -249,6 +249,21 @@ def compute_activities_credits(owner_email):
         }
 
     return jsonify(res), status_code
+
+
+@app.route("/process/generate", methods=["POST"])
+def generateProcess():
+    data = request.get_json()
+
+    owner_email = data['owner_email']
+    owner_name = data['owner_name']
+    owner_enroll = data['owner_enroll']
+
+    final_process_path = Activity_Controller.generate_process(
+        owner_email, owner_name, owner_enroll)
+    # return {"path": final_process_path}, 200
+    return send_file(final_process_path, as_attachment=True)
+
 
 @app.after_request
 def after_request(response):

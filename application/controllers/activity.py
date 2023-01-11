@@ -62,3 +62,19 @@ class Activity_Controller:
             'computed_credits': computed_credits,
             'missing_credits': missing_credits
         }
+
+    def generate_process(owner_email: str, owner_name: str, owner_enroll: str):
+        myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
+        myAssert(owner_name, AssertionError("Owner name can't be empty.", 400))
+        myAssert(owner_enroll, AssertionError("Owner enroll can't be empty.", 400))
+
+        activities = list(Activity.find({
+            "owner_email": owner_email,
+            "status": ACTIVITY_STATUS_VALIDATED
+        }, None, None, None, None))
+
+        data, voucher_paths, reviewers = Activity.get_process_data(activities)
+        Activity.generate_table_of_contents(owner_email, owner_name, owner_enroll, data)
+
+        process_path = Activity.merge_vouchers(owner_email, voucher_paths)
+        return Activity.generate_final_process(process_path, reviewers)
