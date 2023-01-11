@@ -1,14 +1,16 @@
-import threading, os
+import threading
 from application import app
 from flask import request, jsonify, send_file
 
 from application.utils.email import *
 from application.utils.validation import *
+from application.utils.constants import VOUCHERS_GENERAL_DIR
 
 from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
 
 # ====== User
+
 
 @app.route("/user/register", methods=["POST"])
 def register_user():
@@ -20,10 +22,10 @@ def register_user():
     try:
         User_Controller.create(name, email, role)
         status_code = 200
-        message = "User created sussefull"
-    except Exception as e:
+        message = "User successfully created"
+    except AssertionError as e:
         message = e.args[0]
-        status_code = e.args[1] 
+        status_code = e.args[1]
 
     res = {
         "message": message,
@@ -31,6 +33,7 @@ def register_user():
     }
 
     return jsonify(res), status_code
+
 
 @app.route("/user/<email>", methods=["GET"])
 def find_user_by_email(email):
@@ -41,7 +44,7 @@ def find_user_by_email(email):
             "user": user,
             "status_code": status_code,
         }
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
         res = {
@@ -71,7 +74,7 @@ def find_users():
             "users": users,
             "status_code": status_code,
         }
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
         res = {
@@ -82,6 +85,8 @@ def find_users():
     return jsonify(res), status_code
 
 # ====== Activity
+
+
 @app.route("/activity/register", methods=["POST"])
 def register_activity():
     files = request.files
@@ -90,24 +95,15 @@ def register_activity():
     data = request.form
     owner_email = data['owner_email']
     period = data['period']
-    type = data['type']
+    kind = data['type']
     description = data['description']
 
-    doc_general_dir = f'./documents'
-    doc_user_dir = owner_email.split("@")[0]
-    doc_final_path = f'{doc_user_dir}/{voucher.filename}'
-
-    if not os.path.exists(f'{doc_general_dir}/{doc_user_dir}'):
-        os.makedirs(f'{doc_general_dir}/{doc_user_dir}')
-
-    if not os.path.exists(f'{doc_general_dir}/{doc_final_path}'):
-      voucher.save(f'{doc_general_dir}/{doc_final_path}')
-
     try:
-        Activity_Controller.register(owner_email, doc_final_path, period, type, description)
+        Activity_Controller.register(
+            owner_email, voucher, period, kind, description)
         status_code = 200
-        message = "Atividade registrada com sucesso"
-    except Exception as e:
+        message = "Activity successfully created"
+    except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
 
@@ -117,6 +113,7 @@ def register_activity():
     }
 
     return jsonify(res), status_code
+
 
 @app.route("/activity/update/<activity_id>", methods=["PUT"])
 def update_activity(activity_id):
@@ -126,7 +123,7 @@ def update_activity(activity_id):
         Activity_Controller.update(activity_id, data)
         status_code = 200
         message = "Atividade atualizada com sucesso"
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
 
@@ -136,6 +133,7 @@ def update_activity(activity_id):
     }
 
     return jsonify(res), status_code
+
 
 @app.route("/activity/assign/<activity_id>", methods=["PUT"])
 def assign_activity(activity_id):
@@ -146,11 +144,11 @@ def assign_activity(activity_id):
     try:
         thread = threading.Thread(target=send_noreply_email(reviewer))
         thread.start()
-        
+
         Activity_Controller.assign(activity_id, reviewer)
         status_code = 200
         message = "Atividade atualizada com sucesso"
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
 
@@ -161,10 +159,12 @@ def assign_activity(activity_id):
 
     return jsonify(res), status_code
 
+
 @app.route("/activity/doc/download", methods=["GET"])
 def download_activity_doc():
     path = request.args.get('path')
-    return send_file(f'../documents/{path}', as_attachment=True)
+    return send_file(f'../{VOUCHERS_GENERAL_DIR}/{path}', as_attachment=True)
+
 
 @app.route("/activities", methods=["POST"])
 def find_activities():
@@ -190,7 +190,7 @@ def find_activities():
             "activities": activity,
             "status_code": status_code,
         }
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = 400
         res = {
@@ -199,6 +199,7 @@ def find_activities():
         }
 
     return jsonify(res), status_code
+
 
 @app.route("/activities/count", methods=["POST"])
 def count_activities():
@@ -219,7 +220,7 @@ def count_activities():
             "activities_count": activities_count,
             "status_code": status_code,
         }
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = 400
         res = {
@@ -239,7 +240,7 @@ def compute_activities_credits(owner_email):
             "credits_info": credits_info,
             "status_code": status_code,
         }
-    except Exception as e:
+    except AssertionError as e:
         message = e.args[0]
         status_code = 400
         res = {

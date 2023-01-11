@@ -1,20 +1,19 @@
-from application.models.activity import Activity
 from application.utils.validation import *
+from application.models.activity import Activity
 from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS_ASSIGNED, ACTIVITY_STATUS_VALIDATED
-from bson.objectid import ObjectId
+from werkzeug.datastructures import FileStorage
 
 
 class Activity_Controller:
-    def register(owner_email: str, doc_path: str, period: str, type: str, description: str):
-
-        myAssert(owner_email, Exception("Owner email can't be empty.", 400))
-        myAssert(doc_path, Exception("Document can't be empty.", 400))
-        myAssert(period, Exception("Period can't be empty.", 400))
-        myAssert(type, Exception("Type can't be empty.", 400))
-        myAssert(description, Exception("Description can't be empty.", 400))
+    def register(owner_email: str, voucher: FileStorage, period: str, kind: str, description: str):
+        myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
+        myAssert(voucher, AssertionError("Document can't be empty.", 400))
+        myAssert(period, AssertionError("Period can't be empty.", 400))
+        myAssert(kind, AssertionError("Type can't be empty.", 400))
+        myAssert(description, AssertionError("Description can't be empty.", 400))
 
         activity = Activity.register(
-            owner_email, doc_path, period, type, description, ACTIVITY_STATUS_CREATED)
+            owner_email, voucher, period, kind, description, ACTIVITY_STATUS_CREATED)
 
         return activity
 
@@ -23,19 +22,19 @@ class Activity_Controller:
         return activities
 
     def update(activity_id: str, update_fields: str):
-        myAssert(activity_id, Exception("Activity id can't be empty.", 400))
+        myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
 
         activity = Activity.find_one_by_id(activity_id)
-        myAssert(activity, Exception(f"Activity not found.", 404))
+        myAssert(activity, AssertionError(f"Activity not found.", 404))
 
         for field in update_fields:
-            myAssert(field, Exception(f"${field} can't be empty.", 400))
+            myAssert(field, AssertionError(f"${field} can't be empty.", 400))
 
         Activity.update(activity_id, update_fields)
 
     def assign(activity_id: str, reviewer: str):
-        myAssert(activity_id, Exception("Activity id can't be empty.", 400))
-        myAssert(reviewer, Exception("Reviewer id can't be empty.", 400))
+        myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
+        myAssert(reviewer, AssertionError("Reviewer id can't be empty.", 400))
 
         update_fields = {'reviewer': reviewer,
                          'status': ACTIVITY_STATUS_ASSIGNED}
@@ -46,6 +45,8 @@ class Activity_Controller:
         return count
 
     def compute_credits(owner_email: str):
+        myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
+
         activities = list(Activity.find({
             "owner_email": owner_email,
             "status": ACTIVITY_STATUS_VALIDATED
