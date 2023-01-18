@@ -56,7 +56,11 @@ class Activity_Controller:
         missing_credits = 22
         for activity in activities:
             computed_credits += int(activity['credits'])
-            missing_credits -= int(activity['credits'])
+        
+        if computed_credits > missing_credits:
+            missing_credits = 0
+        else:
+            missing_credits -= computed_credits
 
         return {
             'computed_credits': computed_credits,

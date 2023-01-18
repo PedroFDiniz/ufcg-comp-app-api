@@ -1,4 +1,6 @@
 import threading
+import base64
+
 from application import app
 from flask import request, jsonify, send_file
 
@@ -259,10 +261,16 @@ def generateProcess():
     owner_name = data['owner_name']
     owner_enroll = data['owner_enroll']
 
-    final_process_path = Activity_Controller.generate_process(
-        owner_email, owner_name, owner_enroll)
-    # return {"path": final_process_path}, 200
-    return send_file(final_process_path, as_attachment=True)
+    try: 
+        final_process_path = Activity_Controller.generate_process(owner_email, owner_name, owner_enroll)
+
+        with open(final_process_path, "rb") as pdf_file:
+            pdf_data = pdf_file.read()
+            pdf_base64 = base64.b64encode(pdf_data).decode()
+        
+        return jsonify(file=pdf_base64)
+    except FileNotFoundError as e:
+        raise(e)
 
 
 @app.after_request

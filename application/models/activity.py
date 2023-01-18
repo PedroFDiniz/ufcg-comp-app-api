@@ -27,7 +27,8 @@ DEFAULT_PROJECTION_FIELDS = {
     'reviewer': 1,
     'createdTime': 1,
     'updatedTime': 1,
-    'voucher': 1
+    'voucher': 1,
+    'justify': 1
 }
 
 
