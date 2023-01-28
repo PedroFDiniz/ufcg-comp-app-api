@@ -1,6 +1,6 @@
 from application.utils.validation import *
 from application.models.activity import Activity
-from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS_ASSIGNED, ACTIVITY_STATUS_VALIDATED
+from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS_ASSIGNED, ACTIVITY_STATUS_APPROVED
 from werkzeug.datastructures import FileStorage
 
 
@@ -49,7 +49,7 @@ class Activity_Controller:
 
         activities = list(Activity.find({
             "owner_email": owner_email,
-            "status": ACTIVITY_STATUS_VALIDATED
+            "status": ACTIVITY_STATUS_APPROVED
         }, None, None, None, None))
 
         computed_credits = 0
@@ -74,7 +74,7 @@ class Activity_Controller:
 
         activities = list(Activity.find({
             "owner_email": owner_email,
-            "status": ACTIVITY_STATUS_VALIDATED
+            "status": ACTIVITY_STATUS_APPROVED
         }, None, None, None, None))
 
         data, voucher_paths, reviewers = Activity.get_process_data(activities)

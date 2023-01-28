@@ -162,8 +162,8 @@ def assign_activity(activity_id):
     return jsonify(res), status_code
 
 
-@app.route("/activity/doc/download", methods=["GET"])
-def download_activity_doc():
+@app.route("/activity/voucher/download", methods=["GET"])
+def download_activity_voucher():
     path = request.args.get('path')
     return send_file(f'../{VOUCHERS_GENERAL_DIR}/{path}', as_attachment=True)
 
