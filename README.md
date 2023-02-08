@@ -1,14 +1,23 @@
 # Computação UFCG
 
-## Instale o MongoDB
+## Instale e configure o PostgreSQL
 ```
-curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-sudo apt update
-sudo apt install mongodb-org
-sudo systemctl start mongod.service
-sudo systemctl status mongod
-sudo systemctl enable mongod
+sudo apt-get install -y postgresql
+sudo su postgres
+
+export computacao_ufcg_user=computacao_ufcg_user
+export computacao_ufcg_password=computacao_ufcg_password
+export computacao_ufcg_db_name=computacao_ufcg_db_name
+
+psql -c "CREATE USER computacao_ufcg_user WITH PASSWORD 'computacao_ufcg_password';"
+psql -c "CREATE DATABASE computacao_ufcg_db_name OWNER computacao_ufcg_user;"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE computacao_ufcg_db_name TO computacao_ufcg_user;"
+exit
+```
+
+## Instale o psycopg2
+```
+pip install Flask psycopg2-binary
 ```
 
 ## Clone o repositório
@@ -20,7 +29,7 @@ cd ufcg-comp-app-api
 ## Crie um ambiente virtual e instale as dependencia
 * Instale o python venv
   ```
-  apt install python3.10-venv
+  sudo apt-get install python3.8
   ```
 
 * Crie o ambiente virtual

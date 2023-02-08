@@ -1,61 +1,112 @@
+import datetime
+import threading
+
+from application.utils.email import *
 from application.utils.validation import *
+from application.models.user import User
 from application.models.activity import Activity
-from application.utils.constants import ACTIVITY_STATUS_CREATED, ACTIVITY_STATUS_ASSIGNED, ACTIVITY_STATUS_APPROVED
+from application.database.psql_database import DB_ENUM_A_METRICS, DB_ENUM_A_STATE_CREATED, DB_ENUM_A_STATE_ASSIGNED, DB_ENUM_A_STATE_APPROVED, DB_ENUM_A_STATE_REJECTED
 from werkzeug.datastructures import FileStorage
 
 
 class Activity_Controller:
-    def register(owner_email: str, voucher: FileStorage, period: str, kind: str, description: str):
+    def register(owner_email: str, voucher: FileStorage, workload: int, kind: str, description: str, start_date: datetime.datetime, end_date: datetime.datetime):
         myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
         myAssert(voucher, AssertionError("Document can't be empty.", 400))
-        myAssert(period, AssertionError("Period can't be empty.", 400))
+        myAssert(workload, AssertionError("Workload can't be empty.", 400))
         myAssert(kind, AssertionError("Type can't be empty.", 400))
         myAssert(description, AssertionError("Description can't be empty.", 400))
 
-        activity = Activity.register(
-            owner_email, voucher, period, kind, description, ACTIVITY_STATUS_CREATED)
+        kind_obj = {}
+        for act_metric in DB_ENUM_A_METRICS:
+            if kind == act_metric['kind']:
+                kind_obj = act_metric
+                break
 
-        return activity
+        if kind_obj:
+            if ('workload_unity' in kind_obj.keys()) and (kind_obj['workload_unity'] == 'meses'):
+                myAssert(start_date, AssertionError("Start date can't be empty.", 400))
+                myAssert(end_date, AssertionError("End date can't be empty.", 400))
+            activity = Activity.register(owner_email, voucher, workload, kind, description, DB_ENUM_A_STATE_CREATED, start_date, end_date)
 
-    def find(query: dict, page: str, size: str, sort: str, order: str):
-        activities = list(Activity.find(query, page, size, sort, order))
+            return activity
+        else:
+            raise AssertionError("Invalid activity kind.", 400)
+
+    def find_all_subm_activities(page: int, size: int, sort: str, order: str):
+        activities = Activity.find_all_subm_activities(page, size, sort, order)
         return activities
 
-    def update(activity_id: str, update_fields: str):
+    def find_by_owner_or_state(owner_email: str, states: list, page: int, size: int, sort: str, order: str):
+        activities = Activity.find_by_owner_or_state(owner_email, states, page, size, sort, order)
+        return activities
+
+    def find_by_id(activity_id: int):
+        activity = Activity.find_by_owner_or_state(activity_id)
+        return activity
+
+    def validate(activity_id: int, reviewer_email: str, state: str, computed_credits: int, justify: str):
+        myAssert(reviewer_email, AssertionError("Reviewer id can't be empty.", 400))
+        user = User.find_by_email(reviewer_email)
+        myAssert(user, AssertionError("Reviewer not found.", 404))
+        # 0 is the user email index
+        myAssert(user[0] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
+
         myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
+        activity = Activity.find_by_id(activity_id)
+        myAssert(activity, AssertionError("Activity not found.", 404))
+        # 7 is the activity state index
+        myAssert(activity[7] == DB_ENUM_A_STATE_ASSIGNED, AssertionError("Activity must be in assigned state.", 400))
 
-        activity = Activity.find_one_by_id(activity_id)
-        myAssert(activity, AssertionError(f"Activity not found.", 404))
+        myAssert(state, AssertionError("State can't be empty.", 400))
+        myAssert((computed_credits and justify) != True, AssertionError("Invalid submission.", 400))
 
-        for field in update_fields:
-            myAssert(field, AssertionError(f"${field} can't be empty.", 400))
+        #TODO colocar essa thread em outro lugar
+        thread = threading.Thread(target=send_noreply_email(reviewer_email))
+        thread.start()
 
-        Activity.update(activity_id, update_fields)
+        state = state.upper()
+        if state == DB_ENUM_A_STATE_APPROVED:
+            myAssert((computed_credits > 0), AssertionError("Computed credits need to be greater than 0.", 400))
+            Activity.validate(activity_id, state, computed_credits, None)
+        elif state == DB_ENUM_A_STATE_REJECTED:
+            myAssert(justify, AssertionError("Justify can't be empty.", 400))
+            Activity.validate(activity_id, state, None, justify)
+        else:
+            raise AssertionError("Invalid state.", 400)
 
-    def assign(activity_id: str, reviewer: str):
+    def assign(activity_id: str, reviewer_email: str):
+        user = User.find_by_email(reviewer_email)
+        myAssert(user, AssertionError("Reviewer not found.", 404))
+        # 0 is the user email index
+        myAssert(user[0] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
+
         myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
-        myAssert(reviewer, AssertionError("Reviewer id can't be empty.", 400))
+        activity = Activity.find_by_id(activity_id)
+        myAssert(activity, AssertionError("Activity not found.", 404))
+        # 7 is the activity state index
+        myAssert(activity[7] == DB_ENUM_A_STATE_CREATED, AssertionError("Activity must be in created state.", 400))
 
-        update_fields = {'reviewer': reviewer,
-                         'status': ACTIVITY_STATUS_ASSIGNED}
-        Activity.update(activity_id, update_fields)
+        #TODO colocar essa thread em outro lugar
+        thread = threading.Thread(target=send_noreply_email(reviewer_email))
+        thread.start()
 
-    def count(query: dict):
-        count = Activity.count(query)
+        Activity.assign(activity_id, reviewer_email, DB_ENUM_A_STATE_ASSIGNED)
+
+    def count_by_owner_or_state(owner_email: str, states: list):
+        count = Activity.count_by_owner_or_state(owner_email, states)
         return count
 
     def compute_credits(owner_email: str):
         myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
 
-        activities = list(Activity.find({
-            "owner_email": owner_email,
-            "status": ACTIVITY_STATUS_APPROVED
-        }, None, None, None, None))
+        activities = Activity.find_by_owner_or_state(owner_email, [DB_ENUM_A_STATE_APPROVED], None, None, None, None)
 
         computed_credits = 0
         missing_credits = 22
         for activity in activities:
-            computed_credits += int(activity['credits'])
+            # 10 is the computed_credits index
+            computed_credits += activity[10] 
         
         if computed_credits > missing_credits:
             missing_credits = 0
@@ -67,18 +118,3 @@ class Activity_Controller:
             'missing_credits': missing_credits
         }
 
-    def generate_process(owner_email: str, owner_name: str, owner_enroll: str):
-        myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
-        myAssert(owner_name, AssertionError("Owner name can't be empty.", 400))
-        myAssert(owner_enroll, AssertionError("Owner enroll can't be empty.", 400))
-
-        activities = list(Activity.find({
-            "owner_email": owner_email,
-            "status": ACTIVITY_STATUS_APPROVED
-        }, None, None, None, None))
-
-        data, voucher_paths, reviewers = Activity.get_process_data(activities)
-        Activity.generate_table_of_contents(owner_email, owner_name, owner_enroll, data)
-
-        process_path = Activity.merge_vouchers(owner_email, voucher_paths)
-        return Activity.generate_final_process(process_path, reviewers)

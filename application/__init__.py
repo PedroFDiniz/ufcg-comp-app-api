@@ -1,16 +1,14 @@
 from flask import Flask
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
-from application.utils.constants import DB_NAME, MONGO_SERVER_URI
+from application.database.psql_database import init_database, fill_activities_metrics
 
 app = Flask(__name__)
-MONGO_CLIENT = MongoClient(MONGO_SERVER_URI)
-MONGO_DB = MONGO_CLIENT[DB_NAME]
 
 try:
-    MONGO_CLIENT.admin.command('ping')
+    init_database()
+    fill_activities_metrics()
     print("Server available")
-except ConnectionFailure:
+except Exception as e:
     print("Server not available")
+    raise e
 
 from application import router

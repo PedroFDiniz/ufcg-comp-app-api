@@ -6,7 +6,8 @@ load_dotenv()
 PORT = os.getenv("PORT", "")
 HOST = os.getenv("HOST", "")
 DB_NAME = os.getenv("DB_NAME", "")
-MONGO_SERVER_URI = os.getenv("MONGO_SERVER_URI", "")
+DB_USERNAME = os.getenv("DB_USERNAME", "")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
 # == EMAIL ==
 NOREPLY_EMAIL = os.getenv("NOREPLY_EMAIL", "")
@@ -17,11 +18,5 @@ SMTP_SERVER = "smtp.gmail.com"
 SUBJECT = "[Computação@UFCG] Atividade complementar atribuida"
 MESSAGE = """\ Uma nova atividade complementar esta disponivel para revisão."""
 
-# == ACTIVITY ==
-ACTIVITY_STATUS_CREATED = 'CREATED'
-ACTIVITY_STATUS_ASSIGNED = 'ASSIGNED'
-ACTIVITY_STATUS_REJECTED = 'REJECTED'
-ACTIVITY_STATUS_APPROVED = 'APPROVED'
-
-# == PROCESS ==
+# == VOUCHERS ==
 VOUCHERS_GENERAL_DIR = f'vouchers'
