@@ -126,26 +126,6 @@ def find_all_subm_activities():
 
     return jsonify(res), status_code
 
-
-# @app.route("/activity/validate/<activity_id>", methods=["PUT"])
-# def validate_activity(activity_id):
-#     data = request.get_json()
-
-#     try:
-#         Activity_Controller.validate(activity_id, data)
-#         status_code = 200
-#         message = "Atividade atualizada com sucesso"
-#     except AssertionError as e:
-#         message = e.args[0]
-#         status_code = e.args[1]
-
-#     res = {
-#         "message": message,
-#         "status_code": status_code,
-#     }
-
-    return jsonify(res), status_code
-
 @app.route("/activities/find_by_state", methods=["POST"])
 def find_by_owner_or_state():
     data = request.get_json()
@@ -182,7 +162,7 @@ def assign_activity(activity_id):
     try:
         Activity_Controller.assign(activity_id, reviewer_email)
         status_code = 200
-        message = "Atividade atualizada com sucesso"
+        message = "Atividade atribuida com sucesso"
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
@@ -206,7 +186,7 @@ def validate_activity(activity_id):
     try:
         Activity_Controller.validate(activity_id, reviewer_email, state, computed_credits, justify)
         status_code = 200
-        message = "Atividade atualizada com sucesso"
+        message = "Atividade validada com sucesso"
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
@@ -262,7 +242,8 @@ def compute_activities_credits(owner_email):
 @app.route("/activity/voucher/download", methods=["GET"])
 def download_activity_voucher():
     path = request.args.get('path')
-    return send_file(f'../{VOUCHERS_GENERAL_DIR}/{path}', as_attachment=True)
+    print(f'../{path}', flush=True)
+    return send_file(f'../{path}', as_attachment=True)
 
 
 # ====== Process ======
