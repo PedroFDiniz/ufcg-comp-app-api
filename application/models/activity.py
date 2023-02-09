@@ -45,7 +45,7 @@ class Activity:
         cur.execute('UPDATE activities_submitted SET reviewer_email = %s, state = %s WHERE id = %s', (reviewer_email, state, activity_id))
         conn.commit()
 
-        cur.execute('SELECT * FROM activities_submitted WHERE id = %s', (activity_id))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s ;', (activity_id))
         activity = cur.fetchone()
 
         cur.close()
@@ -66,7 +66,7 @@ class Activity:
         cur.execute('UPDATE activities_submitted %s ;' % (query))
         conn.commit()
 
-        cur.execute('SELECT * FROM activities_submitted WHERE id = %s ;', (activity_id))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s ;', (activity_id))
         activity = cur.fetchone()
 
         cur.close()
@@ -85,7 +85,7 @@ class Activity:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM activities_submitted %s;' % (query))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind %s;' % (query))
         activities = cur.fetchall()
         conn.close()
 
@@ -103,9 +103,9 @@ class Activity:
         if states:
             for i, s in enumerate(states):
                 if i == 0:
-                    query += f" state = '{s}' "
+                    query += f" acs.state = '{s}' "
                 else:
-                    query += f" OR  state = '{s}' "
+                    query += f" OR  acs.state = '{s}' "
 
         if (sort and order):
             query += f" ORDER BY {sort} {order} "
@@ -115,7 +115,7 @@ class Activity:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM activities_submitted WHERE %s ;' % (query))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE %s ;' % (query))
         activities = cur.fetchall()
         conn.close()
 
@@ -125,7 +125,7 @@ class Activity:
     def find_by_id(activity_id: int):
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM activities_submitted WHERE id = %s;', (activity_id))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s ;', (activity_id))
         activity = cur.fetchone()
         conn.close()
 
