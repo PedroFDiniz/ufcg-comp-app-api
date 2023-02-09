@@ -35,15 +35,31 @@ class Activity_Controller:
 
     def find_all_subm_activities(page: int, size: int, sort: str, order: str):
         activities = Activity.find_all_subm_activities(page, size, sort, order)
-        return activities
+
+        activities_list = list()
+        for activity in activities:
+          activities_dict = Activity_Controller.map_activity_to_dict(activity)
+          activities_list.append(activities_dict)
+
+        return activities_list
 
     def find_by_owner_or_state(owner_email: str, states: list, page: int, size: int, sort: str, order: str):
         activities = Activity.find_by_owner_or_state(owner_email, states, page, size, sort, order)
-        return activities
+
+        activities_list = list()
+        for activity in activities:
+          activities_dict = Activity_Controller.map_activity_to_dict(activity)
+          activities_list.append(activities_dict)
+
+        return activities_list
 
     def find_by_id(activity_id: int):
         activity = Activity.find_by_owner_or_state(activity_id)
-        return activity
+
+        myAssert(activity, AssertionError("Activity not found.", 404))
+
+        activity_dict = Activity_Controller.map_activity_to_dict(activity)
+        return activity_dict
 
     def validate(activity_id: int, reviewer_email: str, state: str, computed_credits: int, justify: str):
         myAssert(reviewer_email, AssertionError("Reviewer id can't be empty.", 400))
@@ -118,3 +134,21 @@ class Activity_Controller:
             'missing_credits': missing_credits
         }
 
+    @staticmethod
+    def map_activity_to_dict(activity: tuple):
+        return {
+            'id': activity[0],
+            'owner_email': activity[1],
+            'reviewer_email': activity[2],
+            'kind': activity[3],
+            'workload': activity[4],
+            'start_date': activity[5],
+            'end_date': activity[6],
+            'state': activity[7],
+            'description': activity[8],
+            'voucher_path': activity[9],
+            'computed_credits': activity[10],
+            'justify': activity[11],
+            'updatedTime': activity[12],
+            'workload_unity': activity[13]
+        }
