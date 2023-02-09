@@ -4,10 +4,13 @@ from application.database.psql_database import get_db_connection
 class User:
     @staticmethod
     def create(name: str, email: str, role: str):
+
+        print(f'INSERT INTO users (name, email, role) VALUES ({name}, {email}, {role})', flush=True)
+
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('INSERT INTO users (name, email, role) VALUES (%s, %s, %s)', (name, email, role, ))
+        cur.execute('INSERT INTO users (name, email, role) VALUES (%s, %s, %s)', (name, email, role))
         conn.commit()
 
         cur.execute('SELECT * FROM users WHERE email = %s ;', (email, ))

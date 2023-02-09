@@ -155,3 +155,14 @@ class Activity:
 
         return activities[0]
 
+    @staticmethod
+    def get_metrics():
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(' SELECT * FROM activities_metrics; ')
+        metrics = cur.fetchall()
+        conn.close()
+
+        return metrics
+
+

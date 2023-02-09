@@ -134,7 +134,23 @@ class Activity_Controller:
             'missing_credits': missing_credits
         }
 
-    @staticmethod
+    def get_metrics():
+        metrics = Activity.get_metrics()
+    
+        metrics_list = list()
+        for m in metrics:
+          metric_dict = Activity_Controller.map_matrics_to_dict(m)
+          metrics_list.append(metric_dict)
+
+        return metrics_list
+
+    def map_matrics_to_dict(metric):
+        return {
+            'kind': metric[0],
+            'credits_limit': metric[1],
+            'workload_unity': metric[2],
+        }
+
     def map_activity_to_dict(activity: tuple):
         return {
             'id': activity[0],

@@ -77,7 +77,7 @@ def init_database():
 
     cur.execute(" DO $$ "
                 " BEGIN "
-                " IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role') THEN "
+                " IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_enum') THEN "
                 f" CREATE TYPE role AS ENUM ( '{DB_ENUM_U_ROLE_STUDENT}', '{DB_ENUM_U_ROLE_COORDINATOR}', '{DB_ENUM_U_ROLE_REVIEWER}'); "
                 " END IF; "
                 " END$$; "
@@ -94,7 +94,7 @@ def init_database():
 
     cur.execute(" CREATE TABLE IF NOT EXISTS users (email varchar (100) PRIMARY KEY, "
                 " name varchar (100) NOT NULL, "
-                " role role NOT NULL, "
+                " role role_enum NOT NULL, "
                 " enroll integer, "
                 " creation_time timestamp default current_timestamp ); "
                 )
