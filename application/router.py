@@ -100,6 +100,8 @@ def register_activity():
         "status_code": status_code,
     }
 
+    print(res, flush=True)
+
     return jsonify(res), status_code
 
 @app.route("/activities/find_all", methods=["POST"])
@@ -239,11 +241,31 @@ def compute_activities_credits(owner_email):
         }
 
     return jsonify(res), status_code
+
 @app.route("/activity/voucher/download", methods=["GET"])
 def download_activity_voucher():
     path = request.args.get('path')
     print(f'../{path}', flush=True)
     return send_file(f'../{path}', as_attachment=True)
+
+@app.route("/activities/metrics", methods=["GET"])
+def get_activity_metrics():
+    try:
+        metrics_info = Activity_Controller.get_metrics()
+        status_code = 200
+        res = {
+            "metrics_info": metrics_info,
+            "status_code": status_code,
+        }
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = 400
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+    return jsonify(res), status_code
 
 
 # ====== Process ======
