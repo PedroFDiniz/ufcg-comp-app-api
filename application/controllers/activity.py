@@ -83,7 +83,7 @@ class Activity_Controller:
 
         state = state.upper()
         if state == DB_ENUM_A_STATE_APPROVED:
-            myAssert((computed_credits > 0), AssertionError("Computed credits need to be greater than 0.", 400))
+            myAssert(int(computed_credits) > 0, AssertionError("Computed credits need to be greater than 0.", 400))
             Activity.validate(activity_id, state, computed_credits, None)
         elif state == DB_ENUM_A_STATE_REJECTED:
             myAssert(justify, AssertionError("Justify can't be empty.", 400))
@@ -152,6 +152,7 @@ class Activity_Controller:
         }
 
     def map_activity_to_dict(activity: tuple):
+        print(activity, flush=True)
         return {
             'id': activity[0],
             'owner_email': activity[1],
@@ -165,6 +166,7 @@ class Activity_Controller:
             'voucher_path': activity[9],
             'computed_credits': activity[10],
             'justify': activity[11],
-            'updatedTime': activity[12],
-            'workload_unity': activity[13]
+            'creation_time': activity[12],
+            'updated_time': activity[13],
+            'workload_unity': activity[14]
         }

@@ -185,6 +185,11 @@ def validate_activity(activity_id):
     justify = http_data_field(data, 'justify')
     state = http_data_field(data, 'state')
 
+    print(reviewer_email, flush=True)
+    print(computed_credits, flush=True)
+    print(justify, flush=True)
+    print(state, flush=True)
+
     try:
         Activity_Controller.validate(activity_id, reviewer_email, state, computed_credits, justify)
         status_code = 200
@@ -294,7 +299,9 @@ def generateProcess():
 def checkProcess():
     files = request.files
     voucher = files['voucher']
-    user_email = request.form['user_email']
+
+    data = request.form
+    user_email = http_data_field(data, 'user_email')
 
     try:
         is_valid = Process_Controller.check_process(voucher, user_email)
@@ -306,6 +313,7 @@ def checkProcess():
         }
 
         return jsonify(res), status_code
+
     except FileNotFoundError as e:
         raise (e)
 
@@ -314,7 +322,7 @@ def checkProcess():
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', "*")
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization')
+                         'Content-Type')
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,PATCH')
     return response

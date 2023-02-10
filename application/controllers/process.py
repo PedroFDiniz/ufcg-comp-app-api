@@ -28,5 +28,6 @@ class Process_Controller:
         user = User.find_by_email(user_email)
         myAssert(user, AssertionError("Student not found.", 404))
         myAssert(user[0] == user_email, AssertionError("Invalid User.", 400))         # 0 is the user email index
-
+        
         return Process.check_process(voucher, user_email)
+

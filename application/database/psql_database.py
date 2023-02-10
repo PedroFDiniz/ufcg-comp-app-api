@@ -117,6 +117,7 @@ def init_database():
                 " computed_credits integer, "
                 " justify varchar (255), "
                 " creation_time timestamp default current_timestamp, "
+                " updated_time timestamp, "
                 " CONSTRAINT fk_kind FOREIGN KEY (kind) REFERENCES activities_metrics (kind), "
                 " CONSTRAINT fk_owner_email FOREIGN KEY (owner_email) REFERENCES users (email), "
                 " CONSTRAINT fk_reviewer_email FOREIGN KEY (reviewer_email) REFERENCES users (email)); "
@@ -127,6 +128,23 @@ def init_database():
                 " path varchar (255) NOT NULL, "
                 " creation_time timestamp default current_timestamp, "
                 " CONSTRAINT fk_owner_email FOREIGN KEY (owner_email) REFERENCES users (email)); "
+                )
+
+    cur.execute(" CREATE OR REPLACE FUNCTION update_updated_time() "
+                " RETURNS TRIGGER AS $$ "
+                " BEGIN "
+                " NEW.updated_time = now(); "
+                " RETURN NEW; "
+                " END; "
+                " $$ LANGUAGE plpgsql; "
+                )
+   
+    cur.execute(" DROP TRIGGER IF EXISTS update_activities_submitted_updated_time ON activities_submitted; ") 
+
+
+    cur.execute(" CREATE TRIGGER update_activities_submitted_updated_time "
+                " BEFORE INSERT OR UPDATE ON activities_submitted "
+                " FOR EACH ROW EXECUTE PROCEDURE update_updated_time(); "
                 )
 
     conn.commit()
