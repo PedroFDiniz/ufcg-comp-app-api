@@ -133,12 +133,10 @@ class Process:
 
     @staticmethod
     def check_process(voucher: FileStorage, user_email: str):
-        print(user_email, flush=True)
-
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute(f"SELECT checksum FROM process WHERE owner_email = '{user_email}'")
+        cur.execute("SELECT checksum FROM process WHERE owner_email = %s", (user_email))
         checksumDB = cur.fetchone()[0]
 
         cur.close()

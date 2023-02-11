@@ -78,7 +78,7 @@ def init_database():
     cur.execute(" DO $$ "
                 " BEGIN "
                 " IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_enum') THEN "
-                f" CREATE TYPE role AS ENUM ( '{DB_ENUM_U_ROLE_STUDENT}', '{DB_ENUM_U_ROLE_COORDINATOR}', '{DB_ENUM_U_ROLE_REVIEWER}'); "
+                f" CREATE TYPE role_enum AS ENUM ( '{DB_ENUM_U_ROLE_STUDENT}', '{DB_ENUM_U_ROLE_COORDINATOR}', '{DB_ENUM_U_ROLE_REVIEWER}'); "
                 " END IF; "
                 " END$$; "
                 )

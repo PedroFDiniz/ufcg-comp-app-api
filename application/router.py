@@ -1,7 +1,8 @@
+import os
 import base64
 
 from application import app
-from flask import request, jsonify, send_file
+from flask import request, jsonify, send_file, render_template
 
 from application.utils.validation import *
 from application.utils.constants import VOUCHERS_GENERAL_DIR
@@ -9,6 +10,7 @@ from application.utils.constants import VOUCHERS_GENERAL_DIR
 from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
 from application.controllers.process import Process_Controller
+
 
 # ====== User
 
@@ -72,6 +74,7 @@ def find_by_role(role):
 
     return jsonify(res), status_code
 
+
 # ====== Activity
 
 @app.route("/activity/register", methods=["POST"])
@@ -81,9 +84,9 @@ def register_activity():
 
     data = request.form
     owner_email = http_data_field(data, 'owner_email')
-    workload = http_data_field(data, 'workload')
     kind = http_data_field(data, 'kind')
     description = http_data_field(data, 'description')
+    workload = http_data_field(data, 'workload')
     start_date = http_data_field(data, 'start_date')
     end_date = http_data_field(data, 'end_date')
 
@@ -100,10 +103,8 @@ def register_activity():
         "status_code": status_code,
     }
 
-    print(res, flush=True)
-
     return jsonify(res), status_code
-
+    
 @app.route("/activities/find_all", methods=["POST"])
 def find_all_subm_activities():
     page = request.args.get('page')
@@ -185,11 +186,6 @@ def validate_activity(activity_id):
     justify = http_data_field(data, 'justify')
     state = http_data_field(data, 'state')
 
-    print(reviewer_email, flush=True)
-    print(computed_credits, flush=True)
-    print(justify, flush=True)
-    print(state, flush=True)
-
     try:
         Activity_Controller.validate(activity_id, reviewer_email, state, computed_credits, justify)
         status_code = 200
@@ -250,7 +246,6 @@ def compute_activities_credits(owner_email):
 @app.route("/activity/voucher/download", methods=["GET"])
 def download_activity_voucher():
     path = request.args.get('path')
-    print(f'../{path}', flush=True)
     return send_file(f'../{path}', as_attachment=True)
 
 @app.route("/activities/metrics", methods=["GET"])
@@ -317,6 +312,15 @@ def checkProcess():
     except FileNotFoundError as e:
         raise (e)
 
+
+# ====== User Guides ======
+
+@app.route("/guide/activities", methods=["GET"])
+def get_process_user_guide():
+    return render_template('activities_user_guide.html')
+
+
+# ====== CORS ======
 
 @app.after_request
 def after_request(response):

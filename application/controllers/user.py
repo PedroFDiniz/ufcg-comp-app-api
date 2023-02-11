@@ -11,8 +11,9 @@ class User_Controller:
         myAssert(role, AssertionError("Role can't be empty", 400))
         myAssert(User.find_by_email(email) is None, AssertionError("User already registered", 400))
 
-        if role.upper()  in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
-            return User.create(name, email, role.lower())
+        role = role.upper()
+        if role in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
+            return User.create(name, email, role)
         else:
             raise AssertionError("Invalid role", 400)
 
