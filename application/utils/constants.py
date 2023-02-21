@@ -2,6 +2,12 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# == AUTH ==
+AUTH_COORDINATOR_EMAIL = os.getenv("AUTH_COORDINATOR_EMAIL", "")
+AUTH_REVIEWER_DOMAIN = os.getenv("AUTH_REVIEWER_DOMAIN", "")
+AUTH_STUDENT_DOMAIN = os.getenv("AUTH_STUDENT_DOMAIN", "")
+
 # == DATABASE ==
 PORT = os.getenv("PORT", "")
 HOST = os.getenv("HOST", "")

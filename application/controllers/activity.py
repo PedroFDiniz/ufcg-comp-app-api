@@ -152,7 +152,6 @@ class Activity_Controller:
         }
 
     def map_activity_to_dict(activity: tuple):
-        print(activity, flush=True)
         return {
             'id': activity[0],
             'owner_email': activity[1],

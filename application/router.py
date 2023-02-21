@@ -1,25 +1,108 @@
 import os
+import re
 import base64
+import requests
 
-from application import app
+from functools import wraps
 from flask import request, jsonify, send_file, render_template
 
+from application import app
 from application.utils.validation import *
-from application.utils.constants import VOUCHERS_GENERAL_DIR
+from application.utils.constants import AUTH_STUDENT_DOMAIN
 
 from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
 from application.controllers.process import Process_Controller
 
+def check_auth_student(f):
+    @wraps(f)
+    def token_verifier(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+
+        if auth is None:
+            return jsonify({"message": "No Authorization header"}), 401
+
+        try:
+            url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={0}'.format(auth.split(' ')[1])
+            response = requests.get(url)
+            data = response.json()
+
+            print(data, flush=True)
+
+            if int(data['expires_in']) <= 0:
+                return jsonify({"message": "Token expired"}), 401
+
+            # use a regex to check if the email match with AUTH_STUDENT_DOMAIN            
+
+            if not re.match(rf"[^@]+{AUTH_STUDENT_DOMAIN}", data['email']):
+                return jsonify({"message": "Invalid email"}), 401
+
+            # ve se o email é igual o match do token na tabela, se não, revoga o token
+        except KeyError as e:
+            return jsonify({"message": "Invalid token"}), 401
+
+        return f(*args, **kwargs)
+    return token_verifier
+
+# TODO: check auth coordinator
+# def check_auth_coordinator(f):
+
+# TODO: check auth reviewer
+# def check_auth_reviewer(f):
 
 # ====== User
 
+@app.route("/auth/user/student", methods=["POST"])
+def auth_student():
+    auth = request.headers.get('Authorization')
+
+    response = requests.get('https://openidconnect.googleapis.com/v1/userinfo', 
+        headers={
+            'Authorization': auth,
+            'Content-Type': 'application/json'
+        }
+    )
+
+    if response.status_code != 200:
+        res = {
+          "message": "Invalid token", 
+          "status_code": response.status_code
+        }
+        return jsonify(res), response.status_code
+
+    try:
+        response_data = response.json()
+        hd = response_data['hd']
+        email = response_data['email']
+        user = User_Controller.find_by_email(email)
+
+        if (user is None) and (hd == "ccc.ufcg.edu.br"):
+            name = response_data['name']
+            user = User_Controller.create(name, email, "STUDENT")
+
+        status_code = 200
+        message = "User successfully authenticated"
+
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "user": user,
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
+# @auth_coordinator
 @app.route("/user/register", methods=["POST"])
 def register_user():
-    data = request.get_json()
-    name = data['name']
-    email = data['email']
-    role = data['role']
+    data = request.form
+
+    name = http_data_field(data, 'name')
+    email = http_data_field(data, 'email')
+    role = http_data_field(data, 'role')
 
     try:
         User_Controller.create(name, email, role)
@@ -78,6 +161,7 @@ def find_by_role(role):
 # ====== Activity
 
 @app.route("/activity/register", methods=["POST"])
+@check_auth_student
 def register_activity():
     files = request.files
     voucher = files['voucher']
@@ -105,7 +189,7 @@ def register_activity():
 
     return jsonify(res), status_code
     
-@app.route("/activities/find_all", methods=["POST"])
+@app.route("/activities/find_all", methods=["GET"])
 def find_all_subm_activities():
     page = request.args.get('page')
     size = request.args.get('size')
@@ -131,7 +215,8 @@ def find_all_subm_activities():
 
 @app.route("/activities/find_by_state", methods=["POST"])
 def find_by_owner_or_state():
-    data = request.get_json()
+    data = request.form
+
     states = http_data_field(data, 'states')
     owner_email = http_data_field(data, 'owner_email')
 
@@ -157,9 +242,11 @@ def find_by_owner_or_state():
 
     return jsonify(res), status_code
 
+# @auth_coordinator
 @app.route("/activity/assign/<activity_id>", methods=["PUT"])
 def assign_activity(activity_id):
-    data = request.get_json()
+    data = request.form
+
     reviewer_email = data['reviewer_email']
 
     try:
@@ -177,9 +264,10 @@ def assign_activity(activity_id):
 
     return jsonify(res), status_code
 
+# @auth_reviewer
 @app.route("/activity/validate/<activity_id>", methods=["PUT"])
 def validate_activity(activity_id):
-    data = request.get_json()
+    data = request.form
 
     reviewer_email = http_data_field(data, 'reviewer_email')
     computed_credits = http_data_field(data, 'computed_credits')
@@ -203,7 +291,8 @@ def validate_activity(activity_id):
 
 @app.route("/activities/count_by_state", methods=["POST"])
 def count_activities_by_state():
-    data = request.get_json()
+    data = request.form
+
     states = http_data_field(data, 'states')
     owner_email = http_data_field(data, 'owner_email')
 
@@ -271,15 +360,14 @@ def get_activity_metrics():
 # ====== Process ======
 
 @app.route("/process/generate", methods=["POST"])
+@check_auth_student
 def generateProcess():
-    data = request.get_json()
-
-    owner_email = data['owner_email']
-    owner_name = data['owner_name']
-    owner_enroll = data['owner_enroll']
+    data = request.form
+    owner_email = http_data_field(data, 'owner_email')
 
     try:
-        final_process_path = Process_Controller.generate_process(owner_email, owner_name, owner_enroll)
+        user = User_Controller.find_by_email(owner_email)
+        final_process_path = Process_Controller.generate_process(owner_email, user['name'], user['enroll'])
 
         with open(final_process_path, "rb") as pdf_file:
             pdf_data = pdf_file.read()
@@ -290,6 +378,7 @@ def generateProcess():
         raise (e)
 
 
+# @auth_coordinator
 @app.route("/process/check", methods=["POST"])
 def checkProcess():
     files = request.files
