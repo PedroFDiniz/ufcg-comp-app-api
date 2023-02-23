@@ -5,7 +5,7 @@ from application.database.psql_database import DB_ENUM_U_ROLE_COORDINATOR, DB_EN
 
 class User_Controller:
 
-    def create(name: str, email: str, role: str):
+    def create(name: str, email: str, role: str, picture: str = None):
         myAssert(name, AssertionError("Name can't be empty", 400))
         myAssert(email, AssertionError("Email can't be empty", 400))
         myAssert(role, AssertionError("Role can't be empty", 400))
@@ -13,7 +13,7 @@ class User_Controller:
 
         role = role.upper()
         if role in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
-            return User.create(name, email, role)
+            return User.create(name, email, role, picture)
         else:
             raise AssertionError("Invalid role", 400)
 
@@ -32,15 +32,23 @@ class User_Controller:
         if role not in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
             raise AssertionError("Invalid role", 400)
 
-        user = User.find_by_role(role)
-        myAssert(user, AssertionError(f"User not found.", 404))
+        users = User.find_by_role(role)
+        print(users, flush=True)
 
-        return User_Controller.map_user_to_dict(user)
+        myAssert(users, AssertionError(f"User not found.", 404))
+
+        users_list = list()
+        for user in users:
+            users_list.append(User_Controller.map_user_to_dict(user))
+
+        return users_list
 
     def map_user_to_dict(user):
         return {
             'email': user[0],
             'name': user[1],
             'role': user[2],
+            'enroll': user[3],
+            'picture': user[4],
         }
 

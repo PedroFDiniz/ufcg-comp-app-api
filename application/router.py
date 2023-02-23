@@ -65,7 +65,7 @@ def auth_student():
 
     if response.status_code != 200:
         res = {
-          "message": "Invalid token", 
+          "message": "Failed to connect to Google", 
           "status_code": response.status_code
         }
         return jsonify(res), response.status_code
@@ -76,16 +76,19 @@ def auth_student():
         email = response_data['email']
         user = User_Controller.find_by_email(email)
 
-        if (user is None) and (hd == "ccc.ufcg.edu.br"):
-            name = response_data['name']
-            user = User_Controller.create(name, email, "STUDENT")
-
         status_code = 200
         message = "User successfully authenticated"
-
     except AssertionError as e:
-        message = e.args[0]
-        status_code = e.args[1]
+        if e.args[1] == 404 and hd == "ccc.ufcg.edu.br":
+            name = response_data['name']
+            picture = response_data['picture']
+            user = User_Controller.create(name, email, "STUDENT", picture)
+
+            status_code = 200
+            message = "User successfully authenticated"
+        else:
+            message = e.args[0]
+            status_code = e.args[1]
 
     res = {
         "user": user,

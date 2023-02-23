@@ -13,7 +13,6 @@ class Activity_Controller:
     def register(owner_email: str, voucher: FileStorage, workload: int, kind: str, description: str, start_date: datetime.datetime, end_date: datetime.datetime):
         myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
         myAssert(voucher, AssertionError("Document can't be empty.", 400))
-        myAssert(workload, AssertionError("Workload can't be empty.", 400))
         myAssert(kind, AssertionError("Type can't be empty.", 400))
         myAssert(description, AssertionError("Description can't be empty.", 400))
 

@@ -37,24 +37,31 @@ DB_ENUM_A_METRICS = [
      },
     {'kind': 'Participação na autoria de trabalho em Evento.',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Participação em Evento (apresentador).',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Participação em Evento (ouvinte).',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Participação em Evento apoiado (organizador).',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Ministrante em atividade de extensão (oficinas, minicursos, cursos de extensão).',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Colaborador / organizador em atividade de extensão (oficinas, minicursos, cursos de extensão).',
      'credits_limit': 16,
+     'workload_unity': '-',
      },
     {'kind': 'Outras Atividades.',
      'credits_limit': 8,
+     'workload_unity': '-',
      }
 ]
 
@@ -96,6 +103,7 @@ def init_database():
                 " name varchar (100) NOT NULL, "
                 " role role_enum NOT NULL, "
                 " enroll integer, "
+                " picture varchar (255), "
                 " creation_time timestamp default current_timestamp ); "
                 )
 
@@ -108,10 +116,10 @@ def init_database():
                 " owner_email varchar (100) NOT NULL, "
                 " reviewer_email varchar (100), "
                 " kind varchar (255) NOT NULL, "
-                " workload integer NOT NULL, "
+                " workload integer, "
                 " start_date date, "
                 " end_date date, "
-                " statE state_enum NOT NULL, "
+                " state state_enum NOT NULL, "
                 " description varchar (255) NOT NULL, "
                 " voucher_path varchar (150) NOT NULL, "
                 " computed_credits integer, "
@@ -138,9 +146,9 @@ def init_database():
                 " END; "
                 " $$ LANGUAGE plpgsql; "
                 )
-   
-    cur.execute(" DROP TRIGGER IF EXISTS update_activities_submitted_updated_time ON activities_submitted; ") 
 
+    cur.execute(
+        " DROP TRIGGER IF EXISTS update_activities_submitted_updated_time ON activities_submitted; ")
 
     cur.execute(" CREATE TRIGGER update_activities_submitted_updated_time "
                 " BEFORE INSERT OR UPDATE ON activities_submitted "

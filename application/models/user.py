@@ -3,12 +3,12 @@ from application.database.psql_database import get_db_connection
 
 class User:
     @staticmethod
-    def create(name: str, email: str, role: str):
+    def create(name: str, email: str, role: str, picture: str = None):
 
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('INSERT INTO users (name, email, role) VALUES (%s, %s, %s) ;', (name, email, role))
+        cur.execute('INSERT INTO users (name, email, role, picture) VALUES (%s, %s, %s, %s) ;', (name, email, role, picture))
         conn.commit()
 
         cur.execute('SELECT * FROM users WHERE email = %s ;', (email, ))
@@ -36,19 +36,9 @@ class User:
         cur = conn.cursor()
 
         cur.execute('SELECT * FROM users WHERE role = %s ;', (role, ))
-        result = cur.fetchall()
+        users = cur.fetchall()
 
         cur.close()
         conn.close()
-
-        users = []
-        for row in result:
-            users.append({
-                "email": row[0],
-                "name": row[1],
-                "role": row[2],
-                "enroll": row[3],
-                "creation_time": row[4]
-            })
 
         return users
