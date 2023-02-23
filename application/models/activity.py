@@ -95,10 +95,12 @@ class Activity:
     def find_by_owner_or_state(owner_email: str, states: list, page: int, size: int, sort: str, order: str):
         query = ""
         if owner_email:
-            query = f" owner_email = '{owner_email}' "
-        
+            query = f" WHERE owner_email = '{owner_email}' "
+       
         if owner_email and states:
             query += " AND "
+        elif states:
+            query = " WHERE "
 
         if states:
             for i, s in enumerate(states):
@@ -115,7 +117,7 @@ class Activity:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE %s ;' % (query))
+        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind %s ;' % (query))
         activities = cur.fetchall()
         conn.close()
 
@@ -139,6 +141,8 @@ class Activity:
         
         if owner_email and states:
             query += " AND "
+        elif states:
+            query = " WHERE "
 
         if states:
             for i, s in enumerate(states):
@@ -149,7 +153,7 @@ class Activity:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) FROM activities_submitted WHERE %s ;' % (query))
+        cur.execute('SELECT COUNT(*) FROM activities_submitted %s ;' % (query))
         activities = cur.fetchone()
         conn.close()
 

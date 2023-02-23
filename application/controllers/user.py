@@ -11,9 +11,9 @@ class User_Controller:
         myAssert(role, AssertionError("Role can't be empty", 400))
         myAssert(User.find_by_email(email) is None, AssertionError("User already registered", 400))
 
-        role = role.upper()
-        if role in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
-            return User.create(name, email, role, picture)
+        if role.upper() in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
+            user = User.create(name, email, role.lower(), picture)
+            return User_Controller.map_user_to_dict(user)
         else:
             raise AssertionError("Invalid role", 400)
 
@@ -28,13 +28,10 @@ class User_Controller:
     def find_by_role(role: str):
         myAssert(role, AssertionError("Role can't be empty", 400))
 
-        role = role.upper()
-        if role not in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
+        if role.upper() not in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
             raise AssertionError("Invalid role", 400)
 
-        users = User.find_by_role(role)
-        print(users, flush=True)
-
+        users = User.find_by_role(role.lower())
         myAssert(users, AssertionError(f"User not found.", 404))
 
         users_list = list()

@@ -220,8 +220,10 @@ def find_all_subm_activities():
 def find_by_owner_or_state():
     data = request.form
 
-    states = http_data_field(data, 'states')
     owner_email = http_data_field(data, 'owner_email')
+    states = http_data_field(data, 'states')
+    states = states.replace('[', '').replace(']', '').split(',')
+    states = [state.strip() for state in states]
 
     page = int(request.args.get('page'))
     size = int(request.args.get('size'))
@@ -295,9 +297,11 @@ def validate_activity(activity_id):
 @app.route("/activities/count_by_state", methods=["POST"])
 def count_activities_by_state():
     data = request.form
-
-    states = http_data_field(data, 'states')
+   
     owner_email = http_data_field(data, 'owner_email')
+    states = http_data_field(data, 'states')
+    states = states.replace('[', '').replace(']', '').split(',')
+    states = [state.strip() for state in states]
 
     try:
         activities_count = Activity_Controller.count_by_owner_or_state(owner_email, states)

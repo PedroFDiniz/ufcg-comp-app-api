@@ -12,7 +12,7 @@ class User:
         conn.commit()
 
         cur.execute('SELECT * FROM users WHERE email = %s ;', (email, ))
-        user = cur.fetchall()
+        user = cur.fetchone()
 
         cur.close()
         conn.close()
