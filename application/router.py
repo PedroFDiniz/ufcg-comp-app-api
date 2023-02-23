@@ -1,4 +1,3 @@
-import os
 import re
 import base64
 import requests
@@ -8,11 +7,16 @@ from flask import request, jsonify, send_file, render_template
 
 from application import app
 from application.utils.validation import *
-from application.utils.constants import AUTH_STUDENT_DOMAIN
+from application.utils.constants import AUTH_STUDENT_DOMAIN, AUTH_REVIEWER_DOMAIN, AUTH_COORDINATOR_EMAIL
+from application.database.psql_database import DB_ENUM_U_ROLE_STUDENT, DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER
 
 from application.controllers.user import User_Controller
 from application.controllers.activity import Activity_Controller
 from application.controllers.process import Process_Controller
+
+from google.auth import jwt
+
+# ====== CHECK AUTH
 
 def check_auth_student(f):
     @wraps(f)
@@ -27,28 +31,70 @@ def check_auth_student(f):
             response = requests.get(url)
             data = response.json()
 
-            print(data, flush=True)
-
             if int(data['expires_in']) <= 0:
                 return jsonify({"message": "Token expired"}), 401
-
-            # use a regex to check if the email match with AUTH_STUDENT_DOMAIN            
 
             if not re.match(rf"[^@]+{AUTH_STUDENT_DOMAIN}", data['email']):
                 return jsonify({"message": "Invalid email"}), 401
 
-            # ve se o email é igual o match do token na tabela, se não, revoga o token
+            # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
         except KeyError as e:
             return jsonify({"message": "Invalid token"}), 401
 
         return f(*args, **kwargs)
     return token_verifier
 
-# TODO: check auth coordinator
-# def check_auth_coordinator(f):
 
-# TODO: check auth reviewer
-# def check_auth_reviewer(f):
+def check_auth_coordinator(f):
+    @wraps(f)
+    def token_verifier(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+
+        if auth is None:
+            return jsonify({"message": "No Authorization header"}), 401
+
+        try:
+            token = auth.split(' ')[1]
+            data = jwt.decode(token, verify=False)
+
+            if int(data['exp']) <= 0:
+                return jsonify({"message": "Token expired"}), 401
+
+            if not data['email'] == AUTH_COORDINATOR_EMAIL:
+                return jsonify({"message": "Invalid email"}), 401
+
+            # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
+        except KeyError as e:
+            return jsonify({"message": "Invalid token"}), 401
+
+        return f(*args, **kwargs)
+    return token_verifier
+
+
+def check_auth_reviewer(f):
+    @wraps(f)
+    def token_verifier(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+
+        if auth is None:
+            return jsonify({"message": "No Authorization header"}), 401
+
+        try:
+            token = auth.split(' ')[1]
+            data = jwt.decode(token, verify=False)
+
+            if int(data['exp']) <= 0:
+                return jsonify({"message": "Token expired"}), 401
+
+            if not re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", data['email']):
+                return jsonify({"message": "Invalid email"}), 401
+
+            # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
+        except KeyError as e:
+            return jsonify({"message": "Invalid token"}), 401
+
+        return f(*args, **kwargs)
+    return token_verifier
 
 # ====== User
 
@@ -82,11 +128,12 @@ def auth_student():
         if e.args[1] == 404 and hd == "ccc.ufcg.edu.br":
             name = response_data['name']
             picture = response_data['picture']
-            user = User_Controller.create(name, email, "STUDENT", picture)
+            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_STUDENT, picture)
 
             status_code = 200
             message = "User successfully authenticated"
         else:
+            user = None
             message = e.args[0]
             status_code = e.args[1]
 
@@ -98,8 +145,49 @@ def auth_student():
 
     return jsonify(res), status_code
 
-# @auth_coordinator
+@app.route("/auth/user/reviewer_and_coordinator", methods=["POST"])
+def auth_reviewer_and_coordinator():
+    auth = request.headers.get('Authorization')
+    token = auth.split(' ')[1]
+    token_data = jwt.decode(token, verify=False)
+
+    try:
+        email = token_data['email']
+        picture = token_data['picture']
+        user = User_Controller.find_by_email(email)
+
+        status_code = 200
+        message = "User successfully authenticated"
+    except AssertionError as e:
+        if e.args[1] == 404 and re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", email):
+            name = token_data['name']
+            picture = token_data['picture']
+            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_REVIEWER, picture)
+
+            status_code = 200
+            message = "User successfully authenticated"
+        elif e.args[1] == 404 and email == AUTH_COORDINATOR_EMAIL:
+            name = token_data['name']
+            picture = token_data['picture']
+            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_COORDINATOR, picture)
+
+            status_code = 200
+            message = "User successfully authenticated"
+        else:
+            user = None
+            message = e.args[0]
+            status_code = e.args[1]
+
+    res = {
+        "user": user,
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
 @app.route("/user/register", methods=["POST"])
+@check_auth_coordinator
 def register_user():
     data = request.form
 
@@ -164,7 +252,7 @@ def find_by_role(role):
 # ====== Activity
 
 @app.route("/activity/register", methods=["POST"])
-@check_auth_student
+# @check_auth_student
 def register_activity():
     files = request.files
     voucher = files['voucher']
@@ -247,8 +335,8 @@ def find_by_owner_or_state():
 
     return jsonify(res), status_code
 
-# @auth_coordinator
 @app.route("/activity/assign/<activity_id>", methods=["PUT"])
+@check_auth_coordinator
 def assign_activity(activity_id):
     data = request.form
 
@@ -269,8 +357,8 @@ def assign_activity(activity_id):
 
     return jsonify(res), status_code
 
-# @auth_reviewer
 @app.route("/activity/validate/<activity_id>", methods=["PUT"])
+@check_auth_reviewer
 def validate_activity(activity_id):
     data = request.form
 
@@ -385,8 +473,8 @@ def generateProcess():
         raise (e)
 
 
-# @auth_coordinator
 @app.route("/process/check", methods=["POST"])
+@check_auth_coordinator
 def checkProcess():
     files = request.files
     voucher = files['voucher']
@@ -421,8 +509,6 @@ def get_process_user_guide():
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', "*")
-    response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods',
-                         'GET,PUT,POST,DELETE,PATCH')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH')
     return response
