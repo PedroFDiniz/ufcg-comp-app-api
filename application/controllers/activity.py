@@ -3,10 +3,11 @@ import threading
 
 from application.utils.email import *
 from application.utils.validation import *
+from application.utils.constants import AUTH_COORDINATOR_EMAIL
+from application.database.psql_database import DB_ENUM_A_METRICS, DB_ENUM_A_STATE_CREATED, DB_ENUM_A_STATE_ASSIGNED, DB_ENUM_A_STATE_APPROVED, DB_ENUM_A_STATE_REJECTED
 from application.models.user import User
 from application.models.activity import Activity
 from application.controllers.user import User_Controller
-from application.database.psql_database import DB_ENUM_A_METRICS, DB_ENUM_A_STATE_CREATED, DB_ENUM_A_STATE_ASSIGNED, DB_ENUM_A_STATE_APPROVED, DB_ENUM_A_STATE_REJECTED
 from werkzeug.datastructures import FileStorage
 
 
@@ -80,8 +81,10 @@ class Activity_Controller:
         myAssert(state, AssertionError("State can't be empty.", 400))
         myAssert((computed_credits and justify) != True, AssertionError("Invalid submission.", 400))
 
-        #TODO colocar essa thread em outro lugar
-        thread = threading.Thread(target=send_noreply_email(reviewer_email))
+        thread = threading.Thread(target=send_noreply_email(activity['email']))
+        thread.start()
+
+        thread = threading.Thread(target=send_noreply_email(AUTH_COORDINATOR_EMAIL))
         thread.start()
 
         state = state.upper()
@@ -109,7 +112,6 @@ class Activity_Controller:
         activity = Activity_Controller.map_activity_to_dict(activity)
         myAssert(activity['state'] == DB_ENUM_A_STATE_CREATED, AssertionError("Activity must be in created state.", 400))
 
-        #TODO colocar essa thread em outro lugar
         thread = threading.Thread(target=send_noreply_email(reviewer_email))
         thread.start()
 
