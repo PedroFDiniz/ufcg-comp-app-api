@@ -23,7 +23,7 @@ class Process:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('INSERT INTO process (owner_email, checksum , path) VALUES (%s, %s, %s)', (user_email, checksum, process_path))
+        cur.execute(' INSERT INTO process (owner_email, checksum , path) VALUES (%s, %s, %s) ', (user_email, checksum, process_path))
         conn.commit()
         cur.close()
         conn.close()
@@ -136,11 +136,13 @@ class Process:
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute("SELECT checksum FROM process WHERE owner_email = %s", (user_email))
-        checksumDB = cur.fetchone()[0]
-
+        cur.execute(' SELECT checksum FROM process WHERE owner_email = %s ', (user_email, ))
+        checksumDB = cur.fetchone()
         cur.close()
         conn.close()
 
-        checksum = hashlib.md5(voucher.read()).hexdigest()
-        return checksum == checksumDB
+        if checksumDB is not None:
+            checksum = hashlib.md5(voucher.read()).hexdigest()
+            return checksum == checksumDB[0]
+        else:
+            return False
