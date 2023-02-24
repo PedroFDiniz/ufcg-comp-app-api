@@ -20,7 +20,12 @@ class Activity:
             if not os.path.exists(f'{VOUCHERS_GENERAL_DIR}/{user_dir}/{voucher.filename}'):
                 voucher_path = f'{VOUCHERS_GENERAL_DIR}/{user_dir}/{voucher.filename}'
             else:
-                voucher_path = f'{VOUCHERS_GENERAL_DIR}/{user_dir}/{random.randint(0, 1000)}-{voucher.filename}'
+                voucher_index = 1
+                while True:
+                    if not os.path.exists(f'{VOUCHERS_GENERAL_DIR}/{user_dir}/{voucher_index}-{voucher.filename}'):
+                        voucher_path = f'{VOUCHERS_GENERAL_DIR}/{user_dir}/{voucher_index}-{voucher.filename}'
+                        break
+                    voucher_index += 1
 
             voucher.save(voucher_path)
 
