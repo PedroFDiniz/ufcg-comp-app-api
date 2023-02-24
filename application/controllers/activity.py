@@ -5,6 +5,7 @@ from application.utils.email import *
 from application.utils.validation import *
 from application.models.user import User
 from application.models.activity import Activity
+from application.controllers.user import User_Controller
 from application.database.psql_database import DB_ENUM_A_METRICS, DB_ENUM_A_STATE_CREATED, DB_ENUM_A_STATE_ASSIGNED, DB_ENUM_A_STATE_APPROVED, DB_ENUM_A_STATE_REJECTED
 from werkzeug.datastructures import FileStorage
 
@@ -64,14 +65,17 @@ class Activity_Controller:
         myAssert(reviewer_email, AssertionError("Reviewer id can't be empty.", 400))
         user = User.find_by_email(reviewer_email)
         myAssert(user, AssertionError("Reviewer not found.", 404))
-        # 0 is the user email index
-        myAssert(user[0] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
+
+        user = User_Controller.map_user_to_dict(user)
+        myAssert(user['email'] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
 
         myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
+
         activity = Activity.find_by_id(activity_id)
         myAssert(activity, AssertionError("Activity not found.", 404))
-        # 7 is the activity state index
-        myAssert(activity[7] == DB_ENUM_A_STATE_ASSIGNED, AssertionError("Activity must be in assigned state.", 400))
+
+        activity = Activity_Controller.map_activity_to_dict(activity)
+        myAssert(activity['state'] == DB_ENUM_A_STATE_ASSIGNED, AssertionError("Activity must be in assigned state.", 400))
 
         myAssert(state, AssertionError("State can't be empty.", 400))
         myAssert((computed_credits and justify) != True, AssertionError("Invalid submission.", 400))
@@ -93,14 +97,17 @@ class Activity_Controller:
     def assign(activity_id: str, reviewer_email: str):
         user = User.find_by_email(reviewer_email)
         myAssert(user, AssertionError("Reviewer not found.", 404))
-        # 0 is the user email index
-        myAssert(user[0] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
+
+        user = User_Controller.map_user_to_dict(user)
+        myAssert(user['email'] == reviewer_email, AssertionError("Invalid Reviewer.", 400))
 
         myAssert(activity_id, AssertionError("Activity id can't be empty.", 400))
+
         activity = Activity.find_by_id(activity_id)
         myAssert(activity, AssertionError("Activity not found.", 404))
-        # 7 is the activity state index
-        myAssert(activity[7] == DB_ENUM_A_STATE_CREATED, AssertionError("Activity must be in created state.", 400))
+
+        activity = Activity_Controller.map_activity_to_dict(activity)
+        myAssert(activity['state'] == DB_ENUM_A_STATE_CREATED, AssertionError("Activity must be in created state.", 400))
 
         #TODO colocar essa thread em outro lugar
         thread = threading.Thread(target=send_noreply_email(reviewer_email))
@@ -120,7 +127,6 @@ class Activity_Controller:
         computed_credits = 0
         missing_credits = 22
         for activity in activities:
-            # 10 is the computed_credits index
             computed_credits += activity[10] 
         
         if computed_credits > missing_credits:

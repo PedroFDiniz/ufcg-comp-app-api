@@ -9,13 +9,22 @@ class User_Controller:
         myAssert(name, AssertionError("Name can't be empty", 400))
         myAssert(email, AssertionError("Email can't be empty", 400))
         myAssert(role, AssertionError("Role can't be empty", 400))
-        myAssert(User.find_by_email(email) is None, AssertionError("User already registered", 400))
+        myAssert(User.find_by_email(email) is None, AssertionError("User already registered", 409))
 
         if role.upper() in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
             user = User.create(name, email, role.lower(), picture)
             return User_Controller.map_user_to_dict(user)
         else:
             raise AssertionError("Invalid role", 400)
+
+    def update_enroll(email: str, enroll: int):
+        myAssert(email, AssertionError("Email can't be empty", 400))
+        myAssert(enroll, AssertionError("Enroll can't be empty", 400))
+        myAssert(len(str(enroll)) == 9, AssertionError("Invalid enroll", 400))
+        myAssert(User.find_by_email(email), AssertionError(f"User not found.", 404))
+
+        user = User.update_enroll(email, enroll)
+        return User_Controller.map_user_to_dict(user)
 
     def find_by_email(email: str):
         myAssert(email, AssertionError("Email can't be empty", 400))

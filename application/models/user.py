@@ -42,3 +42,18 @@ class User:
         conn.close()
 
         return users
+
+    @staticmethod
+    def update_enroll(email: str, enroll: int):
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('UPDATE users SET enroll = %s WHERE email = %s ;', (enroll, email))
+        conn.commit()
+
+        cur.execute('SELECT * FROM users WHERE email = %s ;', (email, ))
+        user = cur.fetchone()
+
+        cur.close()
+        conn.close()
+        return user

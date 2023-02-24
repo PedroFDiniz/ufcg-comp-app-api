@@ -248,6 +248,29 @@ def find_by_role(role):
 
     return jsonify(res), status_code
 
+@app.route("/user/update/enroll", methods=["PUT"])
+@check_auth_coordinator
+def update_user_enroll():
+    data = request.form
+
+    email = http_data_field(data, 'email')
+    enroll = int(http_data_field(data, 'enroll'))
+
+    try:
+        User_Controller.update_enroll(email, enroll)
+        status_code = 200
+        message = "User successfully created"
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+
+    res = {
+        "message": message,
+        "status_code": status_code,
+    }
+
+    return jsonify(res), status_code
+
 
 # ====== Activity
 

@@ -2,6 +2,7 @@ from application.utils.validation import *
 from application.models.user import User
 from application.models.process import Process
 from application.models.activity import Activity
+from application.controllers.user import User_Controller
 from application.database.psql_database import DB_ENUM_A_STATE_APPROVED
 from werkzeug.datastructures import FileStorage
 
@@ -25,9 +26,12 @@ class Process_Controller:
 
     def check_process(voucher: FileStorage, user_email: str):
         myAssert(user_email, AssertionError("The student email can't be empty.", 400))
+
         user = User.find_by_email(user_email)
         myAssert(user, AssertionError("Student not found.", 404))
-        myAssert(user[0] == user_email, AssertionError("Invalid User.", 400))         # 0 is the user email index
+
+        user = User_Controller.map_user_to_dict(user)
+        myAssert(user['email'] == user_email, AssertionError("Invalid User.", 400))
         
         return Process.check_process(voucher, user_email)
 
