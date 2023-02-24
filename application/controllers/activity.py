@@ -81,7 +81,7 @@ class Activity_Controller:
         myAssert(state, AssertionError("State can't be empty.", 400))
         myAssert((computed_credits and justify) != True, AssertionError("Invalid submission.", 400))
 
-        thread = threading.Thread(target=send_noreply_email(activity['email']))
+        thread = threading.Thread(target=send_noreply_email(activity['owner_email']))
         thread.start()
 
         thread = threading.Thread(target=send_noreply_email(AUTH_COORDINATOR_EMAIL))
@@ -97,7 +97,7 @@ class Activity_Controller:
         else:
             raise AssertionError("Invalid state.", 400)
 
-    def assign(activity_id: str, reviewer_email: str):
+    def assign(activity_id: int, reviewer_email: str):
         user = User.find_by_email(reviewer_email)
         myAssert(user, AssertionError("Reviewer not found.", 404))
 
@@ -175,4 +175,5 @@ class Activity_Controller:
             'creation_time': activity[12],
             'updated_time': activity[13],
             'workload_unity': activity[14]
+            # 'full_period': activity[4] + ' ' + activity[14]
         }

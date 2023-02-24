@@ -29,11 +29,13 @@ class Activity:
 
             voucher.save(voucher_path)
 
+            inset_query = " INSERT INTO activities_submitted (owner_email, kind, workload, state, description, voucher_path, start_date, end_date) "
+            inset_query += f" VALUES ({owner_email}, {kind}, {workload}, {state}, {description}, {voucher_path}, {start_date}, {end_date}) "
+            
             conn = get_db_connection()
             cur = conn.cursor()
 
-            cur.execute('INSERT INTO activities_submitted (owner_email, kind, workload, state, description, voucher_path, start_date, end_date)'
-                        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (owner_email, kind, workload, state, description, voucher_path, start_date, end_date))
+            cur.execute(inset_query)
 
             conn.commit()
             cur.close()
@@ -43,14 +45,17 @@ class Activity:
             raise (e)
 
     @staticmethod
-    def assign(activity_id: str, reviewer_email: str, state: str):
+    def assign(activity_id: int, reviewer_email: str, state: str):
+        update_query = f" UPDATE activities_submitted SET reviewer_email = {reviewer_email}, state = {state} WHERE id = {activity_id} ; "
+        select_query = f" SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = {activity_id} "
+
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('UPDATE activities_submitted SET reviewer_email = %s, state = %s WHERE id = %s', (reviewer_email, state, activity_id))
+        cur.execute(update_query)
         conn.commit()
 
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s', (activity_id))
+        cur.execute(select_query)
         activity = cur.fetchone()
 
         cur.close()
@@ -59,19 +64,21 @@ class Activity:
         return activity
 
     def validate(activity_id: int, state: str, computed_credits: int, justify: str):
-        query = ""
+        update_query = " UPDATE activities_submitted "
         if (computed_credits != None):
-            query = f" SET state = '{state}', computed_credits = {computed_credits} WHERE id = {activity_id} "
+            update_query = f" SET state = '{state}', computed_credits = {computed_credits} WHERE id = {activity_id} "
         else:
-            query = f" SET state = '{state}', justify = '{justify}' WHERE id = {activity_id} "
+            update_query = f" SET state = '{state}', justify = '{justify}' WHERE id = {activity_id} "
+
+        select_query = f" SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = {activity_id} "
 
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('UPDATE activities_submitted %s' % (query))
+        cur.execute(update_query)
         conn.commit()
 
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s', (activity_id))
+        cur.execute(select_query)
         activity = cur.fetchone()
 
         cur.close()
@@ -81,16 +88,16 @@ class Activity:
 
     @staticmethod
     def find_all_subm_activities(page: int, size: int, sort: str, order: str):
-        query = ""
+        select_query = " SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind "
         if (sort and order):
-            query += f" ORDER BY {sort} {order} "
+            select_query += f" ORDER BY {sort} {order} "
 
         if (page != None and size != None):
-            query += f" OFFSET {int(page) * int(size)} ROWS FETCH NEXT {size} ROWS ONLY "
+            select_query += f" OFFSET {int(page) * int(size)} ROWS FETCH NEXT {size} ROWS ONLY "
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind %s' % (query))
+        cur.execute(select_query)
         activities = cur.fetchall()
         conn.close()
 
@@ -98,41 +105,43 @@ class Activity:
 
     @staticmethod
     def find_by_owner_or_state(owner_email: str, states: list, page: int, size: int, sort: str, order: str):
-        query = ""
+        select_query = " SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind "
         if owner_email:
-            query = f" WHERE owner_email = '{owner_email}' "
+            select_query = f" WHERE owner_email = '{owner_email}' "
        
         if owner_email and states:
-            query += " AND "
+            select_query += " AND "
         elif states:
-            query = " WHERE "
+            select_query = " WHERE "
 
         if states:
             for i, s in enumerate(states):
                 if i == 0:
-                    query += f" acs.state = '{s}' "
+                    select_query += f" acs.state = '{s}' "
                 else:
-                    query += f" OR  acs.state = '{s}' "
+                    select_query += f" OR  acs.state = '{s}' "
 
         if (sort and order):
-            query += f" ORDER BY {sort} {order} "
+            select_query += f" ORDER BY {sort} {order} "
         
         if (page != None and size != None):
-            query += f" OFFSET {int(page) * int(size)} ROWS FETCH NEXT {size} ROWS ONLY "
+            select_query += f" OFFSET {int(page) * int(size)} ROWS FETCH NEXT {size} ROWS ONLY "
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind %s ' % (query))
+        cur.execute(select_query)
         activities = cur.fetchall()
         conn.close()
 
         return activities
 
     @staticmethod
-    def find_by_id(activity_id: int):
+    def find_by_id(activity_id: str):
+        select_query = f"SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = {activity_id} "
+
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT acs.*, acm.workload_unity FROM activities_submitted acs JOIN activities_metrics acm ON acs.kind = acm.kind WHERE acs.id = %s ', (activity_id))
+        cur.execute(select_query)
         activity = cur.fetchone()
         conn.close()
 
@@ -140,25 +149,25 @@ class Activity:
 
     @staticmethod
     def count_by_owner_or_state(owner_email: str, states: list):
-        query = ""
+        select_query = " SELECT COUNT(*) FROM activities_submitted "
         if owner_email:
-            query = f" owner_email = '{owner_email}' "
+            select_query = f" owner_email = '{owner_email}' "
         
         if owner_email and states:
-            query += " AND "
+            select_query += " AND "
         elif states:
-            query = " WHERE "
+            select_query = " WHERE "
 
         if states:
             for i, s in enumerate(states):
                 if i == 0:
-                    query += f" state = '{s}' "
+                    select_query += f" state = '{s}' "
                 else:
-                    query += f" OR  state = '{s}' "
+                    select_query += f" OR  state = '{s}' "
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) FROM activities_submitted %s ' % (query))
+        cur.execute(select_query)
         activities = cur.fetchone()
         conn.close()
 
@@ -166,9 +175,11 @@ class Activity:
 
     @staticmethod
     def get_metrics():
+        select_query = " SELECT * FROM activities_metrics; "
+
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(' SELECT * FROM activities_metrics ')
+        cur.execute(select_query)
         metrics = cur.fetchall()
         conn.close()
 
