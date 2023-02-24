@@ -24,14 +24,15 @@ class Process_Controller:
 
         return process_path
 
-    def check_process(voucher: FileStorage, user_email: str):
-        myAssert(user_email, AssertionError("The student email can't be empty.", 400))
+    def check_process(voucher: FileStorage, user_enroll: int):
+        myAssert(user_enroll, AssertionError("The student enroll can't be empty.", 400))
+        myAssert(len(str(user_enroll)) == 9, AssertionError("Student enroll must have 9 digits.", 400))
 
-        user = User.find_by_email(user_email)
+        user = User.find_by_enroll(user_enroll)
         myAssert(user, AssertionError("Student not found.", 404))
 
         user = User_Controller.map_user_to_dict(user)
-        myAssert(user['email'] == user_email, AssertionError("Invalid User.", 400))
+        myAssert(user['enroll'] == user_enroll, AssertionError("Invalid User.", 400))
         
-        return Process.check_process(voucher, user_email)
+        return Process.check_process(voucher, user['email'])
 

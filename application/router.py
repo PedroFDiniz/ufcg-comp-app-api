@@ -503,10 +503,10 @@ def checkProcess():
     voucher = files['voucher']
 
     data = request.form
-    user_email = http_data_field(data, 'user_email')
+    user_enroll = int(http_data_field(data, 'user_enroll'))
 
     try:
-        is_valid = Process_Controller.check_process(voucher, user_email)
+        is_valid = Process_Controller.check_process(voucher, user_enroll)
 
         status_code = 200
         res = {

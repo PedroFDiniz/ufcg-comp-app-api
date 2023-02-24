@@ -31,6 +31,18 @@ class User:
         return user
 
     @staticmethod
+    def find_by_enroll(enroll: int):
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('SELECT * FROM users WHERE enroll = %s ;', (enroll, ))
+        user = cur.fetchone()
+
+        cur.close()
+        conn.close()
+        return user
+
+    @staticmethod
     def find_by_role(role: str):
         conn = get_db_connection()
         cur = conn.cursor()
