@@ -81,10 +81,10 @@ class Activity_Controller:
         myAssert(state, AssertionError("State can't be empty.", 400))
         myAssert((computed_credits and justify) != True, AssertionError("Invalid submission.", 400))
 
-        thread = threading.Thread(target=send_noreply_email(activity['owner_email']))
+        thread = threading.Thread(target=send_noreply_email_validate(activity['owner_email'], activity['description'], activity['reviewer_email']))
         thread.start()
 
-        thread = threading.Thread(target=send_noreply_email(AUTH_COORDINATOR_EMAIL))
+        thread = threading.Thread(target=send_noreply_email_validate(AUTH_COORDINATOR_EMAIL, activity['description'], activity['reviewer_email']))
         thread.start()
 
         state = state.upper()
@@ -112,7 +112,7 @@ class Activity_Controller:
         activity = Activity_Controller.map_activity_to_dict(activity)
         myAssert(activity['state'] == DB_ENUM_A_STATE_CREATED, AssertionError("Activity must be in created state.", 400))
 
-        thread = threading.Thread(target=send_noreply_email(reviewer_email))
+        thread = threading.Thread(target=send_noreply_email_assign(reviewer_email))
         thread.start()
 
         Activity.assign(activity_id, reviewer_email, DB_ENUM_A_STATE_ASSIGNED)

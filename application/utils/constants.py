@@ -21,8 +21,6 @@ NOREPLY_EMAIL_PASSWD = os.getenv("NOREPLY_EMAIL_PASSWD", "")
 
 SMTP_PORT = 587
 SMTP_SERVER = "smtp.gmail.com"
-SUBJECT = "[Computação@UFCG] Atividade complementar atribuida"
-MESSAGE = """\ Uma nova atividade complementar esta disponivel para revisão."""
 
 # == VOUCHERS ==
 VOUCHERS_GENERAL_DIR = f'vouchers'
