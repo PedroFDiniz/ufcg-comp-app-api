@@ -275,7 +275,7 @@ def update_user_enroll():
 # ====== Activity
 
 @app.route("/activity/register", methods=["POST"])
-# @check_auth_student
+@check_auth_student
 def register_activity():
     files = request.files
     voucher = files['voucher']
@@ -319,7 +319,7 @@ def find_all_subm_activities():
         }
     except AssertionError as e:
         message = e.args[0]
-        status_code = 400
+        status_code = e.args[1]
         res = {
             "message": message,
             "status_code": status_code,
@@ -333,8 +333,9 @@ def find_by_owner_or_state():
 
     owner_email = http_data_field(data, 'owner_email')
     states = http_data_field(data, 'states')
-    states = states.replace('[', '').replace(']', '').split(',')
-    states = [state.strip() for state in states]
+    if states:
+        states = states.replace('[', '').replace(']', '').split(',')
+        states = [state.strip() for state in states]
 
     page = int(request.args.get('page'))
     size = int(request.args.get('size'))
@@ -350,7 +351,7 @@ def find_by_owner_or_state():
         }
     except AssertionError as e:
         message = e.args[0]
-        status_code = 400
+        status_code = e.args[1]
         res = {
             "message": message,
             "status_code": status_code,
@@ -391,7 +392,7 @@ def validate_activity(activity_id):
     state = http_data_field(data, 'state')
 
     try:
-        Activity_Controller.validate(activity_id, reviewer_email, state, computed_credits, justify)
+        Activity_Controller.validate(int(activity_id), reviewer_email, state, computed_credits, justify)
         status_code = 200
         message = "Atividade validada com sucesso"
     except AssertionError as e:
@@ -411,8 +412,9 @@ def count_activities_by_state():
    
     owner_email = http_data_field(data, 'owner_email')
     states = http_data_field(data, 'states')
-    states = states.replace('[', '').replace(']', '').split(',')
-    states = [state.strip() for state in states]
+    if states:
+        states = states.replace('[', '').replace(']', '').split(',')
+        states = [state.strip() for state in states]
 
     try:
         activities_count = Activity_Controller.count_by_owner_or_state(owner_email, states)
@@ -423,7 +425,7 @@ def count_activities_by_state():
         }
     except AssertionError as e:
         message = e.args[0]
-        status_code = 400
+        status_code = e.args[1]
         res = {
             "message": message,
             "status_code": status_code,
@@ -442,7 +444,7 @@ def compute_activities_credits(owner_email):
         }
     except AssertionError as e:
         message = e.args[0]
-        status_code = 400
+        status_code = e.args[1]
         res = {
             "message": message,
             "status_code": status_code,
@@ -466,7 +468,7 @@ def get_activity_metrics():
         }
     except AssertionError as e:
         message = e.args[0]
-        status_code = 400
+        status_code = e.args[1]
         res = {
             "message": message,
             "status_code": status_code,
@@ -492,6 +494,15 @@ def generateProcess():
             pdf_base64 = base64.b64encode(pdf_data).decode()
 
         return jsonify(file=pdf_base64)
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+
+        return jsonify(res), status_code
     except FileNotFoundError as e:
         raise (e)
 
@@ -514,6 +525,14 @@ def checkProcess():
             "status_code": status_code,
         }
 
+        return jsonify(res), status_code
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
         return jsonify(res), status_code
 
     except FileNotFoundError as e:
