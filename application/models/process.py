@@ -23,7 +23,7 @@ class Process:
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(' INSERT INTO process (owner_email, checksum , path) VALUES (%s, %s, %s) ', (user_email, checksum, process_path))
+        cur.execute(' INSERT INTO process (owner_email, checksum , path) VALUES (%s, %s, %s) ON CONFLICT (owner_email) DO UPDATE SET checksum = %s, path = %s ', (user_email, checksum, process_path, checksum, process_path))
         conn.commit()
         cur.close()
         conn.close()
@@ -38,17 +38,19 @@ class Process:
                  '<b>Período</b>', '<b>Créditos</b>', '<b>Comprovação</b>']]
 
         for index, activity in enumerate(activities):
-            voucher_paths.append(activity[9])
-            reviewers.append(activity[2])
+            voucher_paths.append(activity['voucher_path'])
+            reviewers.append(activity['reviewer_email'])
+            full_workload = f"{activity['workload']} {activity['workload_unity']}" if activity['workload'] else activity['workload_unity']
             data.append([
-                activity[3], # kind
-                activity[8], # description
-                f"{activity[5]} ", # workload + workload_unity
-                str(activity[10]), # computed_credits
+                activity['kind'],
+                activity['description'],
+                full_workload, 
+                str(activity['computed_credits']),
                 f'Página {index+2}'
             ])
 
         return data, voucher_paths, reviewers
+
     @staticmethod
     def generate_table_of_contents(owner_email: str, owner_name: str, owner_enroll: str, data: list):
         user_dir = owner_email.split("@")[0]

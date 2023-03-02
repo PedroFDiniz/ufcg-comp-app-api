@@ -486,8 +486,7 @@ def generateProcess():
     owner_email = http_data_field(data, 'owner_email')
 
     try:
-        user = User_Controller.find_by_email(owner_email)
-        final_process_path = Process_Controller.generate_process(owner_email, user['name'], user['enroll'])
+        final_process_path = Process_Controller.generate_process(owner_email)
 
         with open(final_process_path, "rb") as pdf_file:
             pdf_data = pdf_file.read()
