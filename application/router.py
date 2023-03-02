@@ -24,7 +24,7 @@ def check_auth_student(f):
         auth = request.headers.get('Authorization')
 
         if auth is None:
-            return jsonify({"message": "No Authorization header"}), 401
+            return jsonify({"message": "Cabeçalho de autorização inexistente"}), 401
 
         try:
             url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={0}'.format(auth.split(' ')[1])
@@ -32,14 +32,14 @@ def check_auth_student(f):
             data = response.json()
 
             if int(data['expires_in']) <= 0:
-                return jsonify({"message": "Token expired"}), 401
+                return jsonify({"message": "Token expirado"}), 401
 
             if not re.match(rf"[^@]+{AUTH_STUDENT_DOMAIN}", data['email']):
-                return jsonify({"message": "Invalid email"}), 401
+                return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
         except KeyError as e:
-            return jsonify({"message": "Invalid token"}), 401
+            return jsonify({"message": "Token inválido"}), 401
 
         return f(*args, **kwargs)
     return token_verifier
@@ -51,21 +51,21 @@ def check_auth_coordinator(f):
         auth = request.headers.get('Authorization')
 
         if auth is None:
-            return jsonify({"message": "No Authorization header"}), 401
+            return jsonify({"message": "Cabeçalho de autorização inexistente"}), 401
 
         try:
             token = auth.split(' ')[1]
             data = jwt.decode(token, verify=False)
 
             if int(data['exp']) <= 0:
-                return jsonify({"message": "Token expired"}), 401
+                return jsonify({"message": "Token expirado"}), 401
 
             if not data['email'] == AUTH_COORDINATOR_EMAIL:
-                return jsonify({"message": "Invalid email"}), 401
+                return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
         except KeyError as e:
-            return jsonify({"message": "Invalid token"}), 401
+            return jsonify({"message": "Token inválido"}), 401
 
         return f(*args, **kwargs)
     return token_verifier
@@ -77,21 +77,21 @@ def check_auth_reviewer(f):
         auth = request.headers.get('Authorization')
 
         if auth is None:
-            return jsonify({"message": "No Authorization header"}), 401
+            return jsonify({"message": "Cabeçalho de autorização inexistente"}), 401
 
         try:
             token = auth.split(' ')[1]
             data = jwt.decode(token, verify=False)
 
             if int(data['exp']) <= 0:
-                return jsonify({"message": "Token expired"}), 401
+                return jsonify({"message": "Token expirado"}), 401
 
             if not re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", data['email']):
-                return jsonify({"message": "Invalid email"}), 401
+                return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
         except KeyError as e:
-            return jsonify({"message": "Invalid token"}), 401
+            return jsonify({"message": "Token inválido"}), 401
 
         return f(*args, **kwargs)
     return token_verifier
@@ -118,12 +118,16 @@ def auth_student():
 
     try:
         response_data = response.json()
+
+        if 'hd' not in response_data:
+            return jsonify({"message": "Email inválido"}), 401
+
         hd = response_data['hd']
         email = response_data['email']
         user = User_Controller.find_by_email(email)
 
         status_code = 200
-        message = "User successfully authenticated"
+        message = "Usuário autenticado com sucesso"
     except AssertionError as e:
         if e.args[1] == 404 and hd == "ccc.ufcg.edu.br":
             name = response_data['name']
@@ -131,7 +135,7 @@ def auth_student():
             user = User_Controller.create(name, email, DB_ENUM_U_ROLE_STUDENT, picture)
 
             status_code = 200
-            message = "User successfully authenticated"
+            message = "Usuário autenticado com sucesso"
         else:
             user = None
             message = e.args[0]
@@ -153,30 +157,20 @@ def auth_reviewer_and_coordinator():
 
     try:
         email = token_data['email']
-        picture = token_data['picture']
         user = User_Controller.find_by_email(email)
-
-        status_code = 200
-        message = "User successfully authenticated"
-    except AssertionError as e:
-        if e.args[1] == 404 and re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", email):
-            name = token_data['name']
-            picture = token_data['picture']
-            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_REVIEWER, picture)
-
+        role = user['role']
+        
+        if role.upper() == DB_ENUM_U_ROLE_COORDINATOR or role.upper() == DB_ENUM_U_ROLE_REVIEWER:
             status_code = 200
-            message = "User successfully authenticated"
-        elif e.args[1] == 404 and email == AUTH_COORDINATOR_EMAIL:
-            name = token_data['name']
-            picture = token_data['picture']
-            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_COORDINATOR, picture)
-
-            status_code = 200
-            message = "User successfully authenticated"
+            message = "Usuário autenticado com sucesso"
         else:
-            user = None
-            message = e.args[0]
-            status_code = e.args[1]
+            status_code = 401
+            message = "Usuário não autorizado"
+
+    except AssertionError as e:
+        user = None
+        message = e.args[0]
+        status_code = e.args[1]
 
     res = {
         "user": user,
@@ -198,7 +192,7 @@ def register_user():
     try:
         User_Controller.create(name, email, role)
         status_code = 200
-        message = "User successfully created"
+        message = "Usuário criado com sucesso"
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
@@ -259,7 +253,7 @@ def update_user_enroll():
     try:
         User_Controller.update_enroll(email, enroll)
         status_code = 200
-        message = "User successfully created"
+        message = "Usuário criado com sucesso"
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]
@@ -291,7 +285,7 @@ def register_activity():
     try:
         Activity_Controller.register(owner_email, voucher, workload, kind, description, start_date, end_date)
         status_code = 200
-        message = "Activity successfully created"
+        message = "Atividade criada com sucesso"
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]

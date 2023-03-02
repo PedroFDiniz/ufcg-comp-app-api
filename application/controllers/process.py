@@ -10,14 +10,14 @@ from werkzeug.datastructures import FileStorage
 
 class Process_Controller:
     def generate_process(owner_email: str):
-        myAssert(owner_email, AssertionError("Owner email can't be empty.", 400))
+        myAssert(owner_email, AssertionError("Email não pode ser vazio.", 400))
 
         user = User.find_by_email(owner_email)
-        myAssert(user, AssertionError("Student not found.", 404))
+        myAssert(user, AssertionError("Estudante não encontrado.", 404))
 
         user = User_Controller.map_user_to_dict(user)
         activities = Activity.find_by_owner_or_state(owner_email, [DB_ENUM_A_STATE_APPROVED], None, None, None, None)
-        myAssert(activities, AssertionError("Activities not found.", 404))
+        myAssert(activities, AssertionError("Atividade não encontrada.", 404))
         
         activities_list = list()
         for activity in activities:
@@ -34,11 +34,11 @@ class Process_Controller:
         return process_path
 
     def check_process(voucher: FileStorage, user_enroll: int):
-        myAssert(user_enroll, AssertionError("The student enroll can't be empty.", 400))
+        myAssert(user_enroll, AssertionError("Matrícula do estudante não pode ser vazia.", 400))
         myAssert(len(str(user_enroll)) == 9, AssertionError("Student enroll must have 9 digits.", 400))
 
         user = User.find_by_enroll(user_enroll)
-        myAssert(user, AssertionError("Student not found.", 404))
+        myAssert(user, AssertionError("Estudante não encontrado.", 404))
 
         user = User_Controller.map_user_to_dict(user)
         myAssert(user['enroll'] == user_enroll, AssertionError("Invalid User.", 400))
