@@ -2,7 +2,7 @@
 
 ## Instale e configure o PostgreSQL
 ```
-sudo apt-get install -y postgresql
+sudo apt-get install -y postgresql-12
 sudo su postgres
 
 export computacao_ufcg_user=computacao_ufcg_user
@@ -15,9 +15,9 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE computacao_ufcg_db_name TO computacao_
 exit
 ```
 
-## Instale o psycopg2
+## Teste se o BD foi criado com
 ```
-pip install Flask psycopg2-binary
+PGPASSWORD=computacao_ufcg_password psql -h localhost computacao_ufcg_db_name computacao_ufcg_user
 ```
 
 ## Clone o repositório
@@ -27,13 +27,14 @@ cd ufcg-comp-app-api
 ```
 
 ## Crie um ambiente virtual e instale as dependencia
-* Instale o python venv
+* Instale o python
   ```
   sudo apt-get install python3.8
   ```
 
 * Crie o ambiente virtual
   ```
+  sudo apt install python3.8-venv
   python3 -m venv computacaoUFCG
   ```
 
