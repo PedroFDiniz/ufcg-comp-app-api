@@ -11,8 +11,9 @@ class User_Controller:
         myAssert(role, AssertionError("Cargo não pode ser vazio.", 400))
         myAssert(User.find_by_email(email) is None, AssertionError("User already registered.", 409))
 
-        if role.upper() in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
-            user = User.create(name, email, role.lower(), picture)
+        role = role.upper()
+        if role in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
+            user = User.create(name, email, role, picture)
             return User_Controller.map_user_to_dict(user)
         else:
             raise AssertionError("Cargo inválido.", 400)
@@ -37,10 +38,11 @@ class User_Controller:
     def find_by_role(role: str):
         myAssert(role, AssertionError("Cargo não pode ser vazio.", 400))
 
-        if role.upper() not in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
+        role = role.upper()
+        if role not in [DB_ENUM_U_ROLE_COORDINATOR, DB_ENUM_U_ROLE_REVIEWER, DB_ENUM_U_ROLE_STUDENT]:
             raise AssertionError("Cargo inválido.", 400)
 
-        users = User.find_by_role(role.lower())
+        users = User.find_by_role(role)
         myAssert(users, AssertionError(f"Usuário não encontrado.", 404))
 
         users_list = list()
