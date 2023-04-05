@@ -142,7 +142,7 @@ class Activity:
     def count_by_owner_or_state(owner_email: str, states: list):
         query = ""
         if owner_email:
-            query = f" owner_email = '{owner_email}' "
+            query = f" WHERE owner_email = '{owner_email}' "
         
         if owner_email and states:
             query += " AND "

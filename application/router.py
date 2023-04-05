@@ -321,7 +321,7 @@ def find_all_subm_activities():
 
     return jsonify(res), status_code
 
-@app.route("/activities/find_by_state", methods=["POST"])
+@app.route("/activities/find_by_owner_state", methods=["POST"])
 def find_by_owner_or_state():
     data = request.form
 
@@ -400,7 +400,7 @@ def validate_activity(activity_id):
 
     return jsonify(res), status_code
 
-@app.route("/activities/count_by_state", methods=["POST"])
+@app.route("/activities/count_by_owner_state", methods=["POST"])
 def count_activities_by_state():
     data = request.form
    
