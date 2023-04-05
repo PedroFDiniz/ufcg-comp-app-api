@@ -46,5 +46,5 @@ cd ufcg-comp-app-api
 
 ## Inicie o projeto
   ```
-  python3 run.py
+  bash bin/start.sh
   ```
