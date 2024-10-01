@@ -3,7 +3,7 @@ import threading
 
 from application.utils.email import *
 from application.utils.validation import *
-from application.utils.constants import AUTH_COORDINATOR_EMAIL
+from application.utils.constants import AUTH_COORDINATOR_EMAIL, CREDIT_POOL_TYPES, TYPE_1_ACTIVITIES, TYPE_2_ACTIVITIES, TYPE_3_ACTIVITIES, TYPE_1_MAX, TYPE_2_MAX, TYPE_3_MAX
 from application.database.psql_database import DB_ENUM_A_METRICS, DB_ENUM_A_STATE_CREATED, DB_ENUM_A_STATE_ASSIGNED, DB_ENUM_A_STATE_APPROVED, DB_ENUM_A_STATE_REJECTED
 from application.models.user import User
 from application.models.activity import Activity
@@ -89,7 +89,8 @@ class Activity_Controller:
 
         state = state.upper()
         if state == DB_ENUM_A_STATE_APPROVED:
-            myAssert(int(computed_credits) > 0, AssertionError("Quantidade de créditos computados precisa ser maior que 0.", 400))
+            if activity[3] not in CREDIT_POOL_TYPES: myAssert(int(computed_credits) > 0, AssertionError("Quantidade de créditos computados precisa ser maior que 0.", 400))
+            else: myAssert(int(computed_credits) != 0, AssertionError("Quantidade de créditos computados precisa ser 0 para essa atividade"))
             Activity.validate(activity_id, state, computed_credits, None)
         elif state == DB_ENUM_A_STATE_REJECTED:
             myAssert(justify, AssertionError("Justificativa não pode ser vazia.", 400))
@@ -129,8 +130,9 @@ class Activity_Controller:
         computed_credits = 0
         missing_credits = 22
         for activity in activities:
-            computed_credits += activity[10] 
-        
+            computed_credits += activity[10]
+        computed_credits += Activity_Controller.credit_pool_total(owner_email)
+
         if computed_credits > missing_credits:
             missing_credits = 0
         else:
@@ -141,21 +143,76 @@ class Activity_Controller:
             'missing_credits': missing_credits
         }
 
+    def compute_credit_pool(owner_email:str) -> dict[ str, int ]:
+        myAssert(owner_email, AssertionError("Email não pode ser vazio.", 400))
+        all_activities = Activity.find_by_owner_or_state(owner_email, [DB_ENUM_A_STATE_APPROVED], None, None, None, None)
+
+        credit_pool = {}
+        for activity in all_activities:
+            if activity[3] in CREDIT_POOL_TYPES:
+                if activity[3] in credit_pool: credit_pool[activity[3]] += activity[4]
+                else: credit_pool[activity[3]] = activity[4]
+        return credit_pool
+
+    def credit_pool_total(owner_email:str) -> int:
+        credit_pool = Activity_Controller.compute_credit_pool(owner_email)
+        metrics = Activity_Controller.get_metrics()
+
+        type_1_total, type_2_total, type_3_total = 0, 0, 0
+        for metr in metrics:
+            if metr['kind'] in credit_pool and metr['kind'] in TYPE_1_ACTIVITIES:
+                type_1_total += int(credit_pool[metr['kind']] / metr['hours_per_credit'])
+            elif metr['kind'] in credit_pool and metr['kind'] in TYPE_2_ACTIVITIES:
+                type_2_total += int(credit_pool[metr['kind']] / metr['hours_per_credit'])
+            elif metr['kind'] in credit_pool and metr['kind'] in TYPE_3_ACTIVITIES:
+                type_3_total += int(credit_pool[metr['kind']] / metr['hours_per_credit'])
+
+        if type_1_total > TYPE_1_MAX: type_1_total = TYPE_1_MAX
+        if type_3_total > TYPE_3_MAX: type_3_total = TYPE_3_MAX
+        if type_2_total + type_3_total > TYPE_2_MAX: type_2_total = TYPE_2_MAX
+        return type_1_total + type_2_total
+
+    def compute_activity_kind_total_and_remainder(credit_pool:dict[str, int], kind:str) -> dict[str,int]:
+        myAssert(kind, AssertionError("Tipo não pode ser vazio."), 400)
+        metrics = Activity_Controller.get_metrics()
+        result: dict[str, int] = {
+            'total credits':0,
+            'hours until next credit':0,
+            'limit':0
+        }
+
+        for metr in metrics:
+            if metr['kind'] == kind:
+                result['limit'] = metr['hours_per_credit']
+                result['total credits'] = int(credit_pool[kind] / metr['hours_per_credit'])
+                result['hours until next credit'] = int(credit_pool[kind] % metr['hours_per_credit'])
+                break
+        return result
+
+    def compute_activity_kinds_info(owner_email:str) -> dict[ str, dict[str, int]]:
+        credit_pool: dict[str, int] = Activity_Controller.compute_credit_pool(owner_email)
+        result: dict[str, dict[str, int]] = {}
+        for kind in CREDIT_POOL_TYPES:
+            if kind in credit_pool.keys():
+                result[kind] = Activity_Controller.compute_activity_kind_total_and_remainder(credit_pool, kind)
+        return result
+
     def get_metrics():
         metrics = Activity.get_metrics()
-    
+
         metrics_list = list()
         for m in metrics:
-          metric_dict = Activity_Controller.map_matrics_to_dict(m)
+          metric_dict = Activity_Controller.map_metrics_to_dict(m)
           metrics_list.append(metric_dict)
 
         return metrics_list
 
-    def map_matrics_to_dict(metric):
+    def map_metrics_to_dict(metric):
         return {
             'kind': metric[0],
             'credits_limit': metric[1],
             'workload_unity': metric[2],
+            'hours_per_credit': metric[3],
         }
 
     def map_activity_to_dict(activity: tuple):
@@ -175,5 +232,4 @@ class Activity_Controller:
             'creation_time': activity[12],
             'updated_time': activity[13],
             'workload_unity': activity[14]
-            # 'full_period': activity[4] + ' ' + activity[14]
         }

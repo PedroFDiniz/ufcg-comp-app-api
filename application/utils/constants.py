@@ -24,3 +24,25 @@ SMTP_SERVER = "smtp.gmail.com"
 
 # == VOUCHERS ==
 VOUCHERS_GENERAL_DIR = f'vouchers'
+
+# == POOLED ACTIVITY CLASSIFICATION ==
+TYPE_1_ACTIVITIES = [
+    'Participação em Evento apoiado (organizador).',
+    'Participação em Evento (ouvinte).',
+    'Participação em Evento (apresentador).',
+    'Participação na autoria de trabalho em Evento.',
+]
+
+TYPE_2_ACTIVITIES = [
+    'Colaborador / organizador em atividade de extensão (oficinas, minicursos, cursos de extensão).',
+    'Ministrante em atividade de extensão (oficinas, minicursos, cursos de extensão).',
+]
+
+TYPE_3_ACTIVITIES = [
+    'Outras Atividades.',
+]
+
+CREDIT_POOL_ACTIVITIES: list[str] = TYPE_1_ACTIVITIES + TYPE_2_ACTIVITIES + TYPE_3_ACTIVITIES
+TYPE_1_MAX = 16
+TYPE_2_MAX = 16
+TYPE_3_MAX = 8

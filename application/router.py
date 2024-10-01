@@ -427,6 +427,34 @@ def count_activities_by_state():
 
     return jsonify(res), status_code
 
+@app.route("/activities/creditPool/<owner_email>", methods=['GET'])
+def compute_credits_pool(owner_email):
+    try:
+        status_code = 200
+        res = Activity_Controller.compute_credit_pool(owner_email)
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+        return jsonify(res), status_code
+    
+@app.route("/activities/creditPoolActivities/<owner_email>", methods=['GET'])
+def compute_credit_pool_activities(owner_email):
+    try:
+        status_code = 200
+        res = Activity_Controller.compute_activity_kinds_info(owner_email)
+    except AssertionError as e:
+        message = e.args[0]
+        status_code = e.args[1]
+        res = {
+            "message": message,
+            "status_code": status_code,
+        }
+        return jsonify(res), status_code
+
 @app.route("/activities/computeCredits/<owner_email>", methods=["GET"])
 def compute_activities_credits(owner_email):
     try:

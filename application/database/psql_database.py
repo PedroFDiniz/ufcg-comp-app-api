@@ -14,57 +14,69 @@ DB_ENUM_A_METRICS = [
     {'kind': 'Participação em Pesquisa de Iniciação Científica ou Extensão Reconhecida Institucionalmente pela UFCG.',
      'credits_limit': 18,
      'workload_unity': 'ano(s)',
+     'hours_per_credit': 1
      },
     {'kind': 'Participação em Projeto de Pesquisa e Desenvolvimento Reconhecido Institucionalmente pela UFCG, incluindo atividades de PD&I junto à CodeX.',
      'credits_limit': 16,
      'workload_unity': 'meses',
+     'hours_per_credit': 1
      },
     {'kind': 'Participação em Monitoria Reconhecida Institucionalmente pela UFCG.',
      'credits_limit': 16,
      'workload_unity': 'semestre(s)',
+     'hours_per_credit': 1
      },
     {'kind': 'Realização de Estágio Não Obrigatório.',
      'credits_limit': 18,
      'workload_unity': 'hora(s)',
+     'hours_per_credit': 1
      },
     {'kind': 'Atividades profissionais na área de Ciência da Computação (válido apenas para alunos que integralizaram pelo menos 80 créditos obrigatórios).',
      'credits_limit': 16,
      'workload_unity': 'hora(s)',
+     'hours_per_credit': 1
      },
     {'kind': 'Representação Estudantil. Participação na direção do Centro Acadêmico do curso de Ciência da Computação da UFCG, participação no colegiado do Curso de Ciência da Computação ou participação na Direção do Diretório Central de Estudantes da UFCG.',
      'credits_limit': 2,
      'workload_unity': 'ano(s)',
+     'hours_per_credit': 1
      },
     {'kind': 'Participação na autoria de trabalho em Evento.',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Participação em Evento (apresentador).',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Participação em Evento (ouvinte).',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Participação em Evento apoiado (organizador).',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Ministrante em atividade de extensão (oficinas, minicursos, cursos de extensão).',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Colaborador / organizador em atividade de extensão (oficinas, minicursos, cursos de extensão).',
      'credits_limit': 16,
      'workload_unity': '-',
+     'hours_per_credit': 30
      },
     {'kind': 'Outras Atividades.',
      'credits_limit': 8,
      'workload_unity': '-',
+     'hours_per_credit': 60
      }
 ]
-
 
 def get_db_connection():
     conn = psycopg2.connect(
