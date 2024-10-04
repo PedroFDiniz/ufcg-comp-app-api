@@ -27,14 +27,20 @@ def check_auth_student(f):
             return jsonify({"message": "Cabeçalho de autorização inexistente"}), 401
 
         try:
-            url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={0}'.format(auth.split(' ')[1])
-            response = requests.get(url)
+            token = auth.split(' ')[1]
+            response = requests.get('https://eureca.lsd.ufcg.edu.br/as/profile', 
+                headers={
+                    'token-de-autenticacao': token,
+                    'Content-Type': 'application/json'
+                }
+            )
             data = response.json()
+            status = response.status_code
 
-            if int(data['expires_in']) <= 0:
-                return jsonify({"message": "Token expirado"}), 401
+            if status != 200:
+                return jsonify({"message": "Credenciais inválidas, tente logar novamente"}), 401
 
-            if not re.match(rf"[^@]+{AUTH_STUDENT_DOMAIN}", data['email']):
+            if not re.match(rf"[^@]+{AUTH_STUDENT_DOMAIN}", data['attributes']['email']):
                 return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
@@ -55,12 +61,19 @@ def check_auth_coordinator(f):
 
         try:
             token = auth.split(' ')[1]
+            response = requests.get('https://eureca.lsd.ufcg.edu.br/as/profile', 
+                headers={
+                    'token-de-autenticacao': token,
+                    'Content-Type': 'application/json'
+                }
+            )
             data = jwt.decode(token, verify=False)
+            status = response.status_code
 
-            if int(data['exp']) <= 0:
-                return jsonify({"message": "Token expirado"}), 401
+            if status != 200:
+                return jsonify({"message": "Credenciais inválidas, tente logar novamente"}), 401
 
-            if not data['email'] == AUTH_COORDINATOR_EMAIL:
+            if not data['attributes']['email'] == AUTH_COORDINATOR_EMAIL:
                 return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
@@ -81,12 +94,19 @@ def check_auth_reviewer(f):
 
         try:
             token = auth.split(' ')[1]
+            response = requests.get('https://eureca.lsd.ufcg.edu.br/as/profile', 
+                headers={
+                    'token-de-autenticacao': token,
+                    'Content-Type': 'application/json'
+                }
+            )
             data = jwt.decode(token, verify=False)
+            status = response.status_code
 
-            if int(data['exp']) <= 0:
-                return jsonify({"message": "Token expirado"}), 401
+            if status != 200:
+                return jsonify({"message": "Credenciais inválidas, tente logar novamente"}), 401
 
-            if not re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", data['email']):
+            if not re.search(rf"[^@]+{AUTH_REVIEWER_DOMAIN}", data['attributes']['email']):
                 return jsonify({"message": "Email inválido"}), 401
 
             # TODO ver se o email é igual o match do token na tabela, se não, revoga o token
@@ -102,16 +122,16 @@ def check_auth_reviewer(f):
 def auth_student():
     auth = request.headers.get('Authorization')
 
-    response = requests.get('https://openidconnect.googleapis.com/v1/userinfo', 
+    response = requests.get('https://eureca.lsd.ufcg.edu.br/as/profile', 
         headers={
-            'Authorization': auth,
+            'token-de-autenticacao': auth.split(' ')[1],
             'Content-Type': 'application/json'
         }
     )
 
     if response.status_code != 200:
         res = {
-          "message": "Failed to connect to Google", 
+          "message": "Failed to connect to Eureca", 
           "status_code": response.status_code
         }
         return jsonify(res), response.status_code
@@ -119,11 +139,11 @@ def auth_student():
     try:
         response_data = response.json()
 
-        if 'hd' not in response_data:
+        if 'attributes' not in response_data:
             return jsonify({"message": "Email inválido"}), 401
 
-        hd = response_data['hd']
-        email = response_data['email']
+        hd = response_data['attributes']['email'].split('@')
+        email = response_data['attributes']['email']
         user = User_Controller.find_by_email(email)
 
         status_code = 200
@@ -131,7 +151,7 @@ def auth_student():
     except AssertionError as e:
         if e.args[1] == 404 and hd == "ccc.ufcg.edu.br":
             name = response_data['name']
-            picture = response_data['picture']
+            picture = None
             user = User_Controller.create(name, email, DB_ENUM_U_ROLE_STUDENT, picture)
 
             status_code = 200
@@ -155,11 +175,26 @@ def auth_reviewer_and_coordinator():
     token = auth.split(' ')[1]
     token_data = jwt.decode(token, verify=False)
 
+    response = requests.get('https://eureca.lsd.ufcg.edu.br/as/profile', 
+        headers={
+            'token-de-autenticacao': token,
+            'Content-Type': 'application/json'
+        }
+    )
+
+    if response.status_code != 200:
+        res = {
+            "message": "Failed to connect to Eureca", 
+            "status_code": response.status_code
+        }
+        return jsonify(res), response.status_code
+
     try:
-        email = token_data['email']
+        response_data  = response.json()
+        email = response_data['attributes']['email']
         user = User_Controller.find_by_email(email)
         role = user['role']
-        
+
         if role.upper() == DB_ENUM_U_ROLE_COORDINATOR or role.upper() == DB_ENUM_U_ROLE_REVIEWER:
             status_code = 200
             message = "Usuário autenticado com sucesso"
@@ -168,9 +203,17 @@ def auth_reviewer_and_coordinator():
             message = "Usuário não autorizado"
 
     except AssertionError as e:
-        user = None
-        message = e.args[0]
-        status_code = e.args[1]
+        if e.args[1] == 404 and email == AUTH_COORDINATOR_EMAIL:
+            name = response_data['name']
+            picture = None
+            user = User_Controller.create(name, email, DB_ENUM_U_ROLE_COORDINATOR, picture)
+
+            status_code = 200
+            message = "Usuário autenticado com sucesso"
+        else:
+            user = None
+            message = e.args[0]
+            status_code = e.args[1]
 
     res = {
         "user": user,
@@ -403,7 +446,7 @@ def validate_activity(activity_id):
 @app.route("/activities/count_by_owner_state", methods=["POST"])
 def count_activities_by_state():
     data = request.form
-   
+
     owner_email = http_data_field(data, 'owner_email')
     states = http_data_field(data, 'states')
     if states:
@@ -440,12 +483,12 @@ def compute_credits_pool(owner_email):
             "status_code": status_code,
         }
         return jsonify(res), status_code
-    
-@app.route("/activities/creditPoolActivities/<owner_email>", methods=['GET'])
-def compute_credit_pool_activities(owner_email):
+
+@app.route("/activities/creditPoolActivities/<kind>/<owner_email>", methods=['GET'])
+def compute_credit_pool_activities(owner_email, kind):
     try:
         status_code = 200
-        res = Activity_Controller.compute_activity_kinds_info(owner_email)
+        res = Activity_Controller.get_credit_pool_by_activity_kind(owner_email, kind)
     except AssertionError as e:
         message = e.args[0]
         status_code = e.args[1]

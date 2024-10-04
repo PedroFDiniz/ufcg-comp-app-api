@@ -14,32 +14,26 @@ DB_ENUM_A_METRICS = [
     {'kind': 'Participação em Pesquisa de Iniciação Científica ou Extensão Reconhecida Institucionalmente pela UFCG.',
      'credits_limit': 18,
      'workload_unity': 'ano(s)',
-     'hours_per_credit': 1
      },
     {'kind': 'Participação em Projeto de Pesquisa e Desenvolvimento Reconhecido Institucionalmente pela UFCG, incluindo atividades de PD&I junto à CodeX.',
      'credits_limit': 16,
      'workload_unity': 'meses',
-     'hours_per_credit': 1
      },
     {'kind': 'Participação em Monitoria Reconhecida Institucionalmente pela UFCG.',
      'credits_limit': 16,
      'workload_unity': 'semestre(s)',
-     'hours_per_credit': 1
      },
     {'kind': 'Realização de Estágio Não Obrigatório.',
      'credits_limit': 18,
      'workload_unity': 'hora(s)',
-     'hours_per_credit': 1
      },
     {'kind': 'Atividades profissionais na área de Ciência da Computação (válido apenas para alunos que integralizaram pelo menos 80 créditos obrigatórios).',
      'credits_limit': 16,
      'workload_unity': 'hora(s)',
-     'hours_per_credit': 1
      },
     {'kind': 'Representação Estudantil. Participação na direção do Centro Acadêmico do curso de Ciência da Computação da UFCG, participação no colegiado do Curso de Ciência da Computação ou participação na Direção do Diretório Central de Estudantes da UFCG.',
      'credits_limit': 2,
      'workload_unity': 'ano(s)',
-     'hours_per_credit': 1
      },
     {'kind': 'Participação na autoria de trabalho em Evento.',
      'credits_limit': 16,
@@ -136,6 +130,7 @@ def init_database():
                 " voucher_path varchar (150) NOT NULL, "
                 " computed_credits integer, "
                 " justify varchar (255), "
+                " group integer NOT NULL, "
                 " creation_time timestamp default current_timestamp, "
                 " updated_time timestamp, "
                 " CONSTRAINT fk_kind FOREIGN KEY (kind) REFERENCES activities_metrics (kind), "
@@ -180,15 +175,18 @@ def fill_activities_metrics():
 
     for metric in DB_ENUM_A_METRICS:
         try:
-            cur.execute(" INSERT INTO activities_metrics (kind, credits_limit, workload_unity) "
+            if 'hours_per_credit' in metric:
+                cur.execute(" INSERT INTO activities_metrics (kind, credits_limit) "
                         " VALUES (%s, %s, %s) "
                         " ON CONFLICT DO NOTHING; ",
-                        (metric['kind'], metric['credits_limit'], metric['workload_unity']))
+                        (metric['kind'], metric['credits_limit'], metric['hours_per_credit']))
+            else:
+                cur.execute(" INSERT INTO activities_metrics (kind, credits_limit, workload_unity) "
+                            " VALUES (%s, %s, %s) "
+                            " ON CONFLICT DO NOTHING; ",
+                            (metric['kind'], metric['credits_limit'], metric['workload_unity']))
         except KeyError:
-            cur.execute(" INSERT INTO activities_metrics (kind, credits_limit) "
-                        " VALUES (%s, %s) "
-                        " ON CONFLICT DO NOTHING; ",
-                        (metric['kind'], metric['credits_limit']))
+            pass
 
     conn.commit()
 

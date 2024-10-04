@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 class Activity:
 
     @staticmethod
-    def register(owner_email: str, voucher: FileStorage, workload: int, kind: str, description: str, state: str, start_date: datetime.datetime, end_date: datetime.datetime):
+    def register(owner_email: str, voucher: FileStorage, workload: int, kind: str, description: str, state: str, start_date: datetime.datetime, end_date: datetime.datetime, group: int):
         try:
             user_dir = owner_email.split("@")[0]
 
@@ -32,8 +32,8 @@ class Activity:
             conn = get_db_connection()
             cur = conn.cursor()
 
-            cur.execute('INSERT INTO activities_submitted (owner_email, kind, workload, state, description, voucher_path, start_date, end_date)'
-                        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (owner_email, kind, workload, state, description, voucher_path, start_date, end_date))
+            cur.execute('INSERT INTO activities_submitted (owner_email, kind, workload, state, description, voucher_path, start_date, end_date, group)'
+                        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)', (owner_email, kind, workload, state, description, voucher_path, start_date, end_date, group))
 
             conn.commit()
             cur.close()
@@ -101,7 +101,7 @@ class Activity:
         query = ""
         if owner_email:
             query = f" WHERE owner_email = '{owner_email}' "
-       
+
         if owner_email and states:
             query += " AND "
         elif states:
@@ -116,7 +116,7 @@ class Activity:
 
         if (sort and order):
             query += f" ORDER BY {sort} {order} "
-        
+
         if (page != None and size != None):
             query += f" OFFSET {int(page) * int(size)} ROWS FETCH NEXT {size} ROWS ONLY "
 
@@ -143,7 +143,7 @@ class Activity:
         query = ""
         if owner_email:
             query = f" WHERE owner_email = '{owner_email}' "
-        
+
         if owner_email and states:
             query += " AND "
         elif states:
@@ -173,5 +173,3 @@ class Activity:
         conn.close()
 
         return metrics
-
-
